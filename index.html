@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CENTRAL EUROVIA · build v7 · 25/08 -->
+<!-- CENTRAL EUROVIA · build v9 · 25/08 -->
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -43,8 +43,8 @@ html,body{margin:0;padding:0;-webkit-text-size-adjust:100%}
 body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Arial,sans-serif}
 
 /* ================= TROCA DE TELAS ================= */
-#view-home,#view-estoque,#view-oficina,#view-vendas,#view-breve{display:none}
-#view-home.on,#view-estoque.on,#view-oficina.on,#view-vendas.on,#view-breve.on{display:block}
+#view-home,#view-estoque,#view-oficina,#view-vendas,#view-qualidade,#view-breve{display:none}
+#view-home.on,#view-estoque.on,#view-oficina.on,#view-vendas.on,#view-qualidade.on,#view-breve.on{display:block}
 
 /* botão de voltar dentro do painel de estoque */
 #view-estoque .cabecalho-est{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -147,57 +147,74 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
 }
 #view-vendas .btn-voltar:hover{border-color:#ffce00;color:#ffce00}
 
-/* botões de ação do comparativo da oficina */
-#view-oficina .ofi-acoes{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-#view-oficina .ofi-btn{
+/* botões de ação e slide — oficina e qualidade compartilham o mesmo padrão */
+#view-oficina .ofi-acoes,#view-qualidade .ofi-acoes{display:flex;align-items:center;gap:8px;flex-wrap:wrap}#view-oficina .ofi-btn,#view-qualidade .ofi-btn{
   font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;text-transform:uppercase;
   letter-spacing:.12em;font-size:11.5px;padding:8px 14px;cursor:pointer;border-radius:0;
   background:#1f2225;color:#c8cdd2;border:1px solid #34393e;transition:.15s;
-}
-#view-oficina .ofi-btn:hover{border-color:#ffce00;color:#ffce00}
-#view-oficina .ofi-btn.ativo{border-color:#8b9095;color:#e8e9ea}
-#view-oficina .ofi-btn.amarelo{background:#ffce00;color:#16181a;border-color:#ffce00}
-#view-oficina .ofi-btn.amarelo:hover{background:#ffd83d;color:#16181a}
-
-/* overlay do slide da oficina */
-#view-oficina .ofi-slide-overlay{
+}#view-oficina .ofi-btn:hover,#view-qualidade .ofi-btn:hover{border-color:#ffce00;color:#ffce00}#view-oficina .ofi-btn.ativo,#view-qualidade .ofi-btn.ativo{border-color:#8b9095;color:#e8e9ea}#view-oficina .ofi-btn.amarelo,#view-qualidade .ofi-btn.amarelo{background:#ffce00;color:#16181a;border-color:#ffce00}#view-oficina .ofi-btn.amarelo:hover,#view-qualidade .ofi-btn.amarelo:hover{background:#ffd83d;color:#16181a}/* overlay do slide da oficina */
+#view-oficina .ofi-slide-overlay,#view-qualidade .ofi-slide-overlay{
   display:none;position:fixed;inset:0;z-index:60;background:rgba(10,11,12,.94);
   padding:18px;overflow:auto;
-}
-#view-oficina .ofi-slide-overlay.on{display:block}
-#view-oficina .ofi-slide-box{
+}#view-oficina .ofi-slide-overlay.on,#view-qualidade .ofi-slide-overlay.on{display:block}#view-oficina .ofi-slide-box,#view-qualidade .ofi-slide-box{
   max-width:1360px;margin:0 auto;background:#16181a;border:1px solid #34393e;
-}
-#view-oficina .ofi-slide-topo{
+}#view-oficina .ofi-slide-topo,#view-qualidade .ofi-slide-topo{
   display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
   padding:14px 18px;border-bottom:1px solid #34393e;
-}
-#view-oficina .ofi-slide-tit{
+}#view-oficina .ofi-slide-tit,#view-qualidade .ofi-slide-tit{
   font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;text-transform:uppercase;
   letter-spacing:.16em;font-size:12px;color:#8b9095;
-}
-#view-oficina .ofi-slide-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-#view-oficina .ofi-slide-lab{
+}#view-oficina .ofi-slide-ctrl,#view-qualidade .ofi-slide-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}#view-oficina .ofi-slide-lab,#view-qualidade .ofi-slide-lab{
   font-family:"Barlow Condensed","Arial Narrow",sans-serif;text-transform:uppercase;
   letter-spacing:.14em;font-size:10.5px;color:#6d7378;
-}
-#view-oficina .ofi-slide-ctrl select{
+}#view-oficina .ofi-slide-ctrl select,#view-qualidade .ofi-slide-ctrl select{
   font-family:"Barlow",sans-serif;font-size:13px;padding:7px 10px;border-radius:0;
   background:#1f2225;color:#e8e9ea;border:1px solid #34393e;
-}
-#view-oficina .ofi-slide-tela{padding:18px;overflow-x:auto}
-#view-oficina .ofi-slide-tela canvas{
+}#view-oficina .ofi-slide-tela,#view-qualidade .ofi-slide-tela{padding:18px;overflow-x:auto}#view-oficina .ofi-slide-tela canvas,#view-qualidade .ofi-slide-tela canvas{
   width:100%;max-width:1300px;display:block;margin:0 auto;border:1px solid #34393e;
-}
-#view-oficina .ofi-slide-nota{
+}#view-oficina .ofi-slide-nota,#view-qualidade .ofi-slide-nota{
   padding:12px 18px 16px;border-top:1px solid #34393e;
   font-family:"Barlow",sans-serif;font-size:12px;line-height:1.6;color:#8b9095;
-}
-#view-oficina .ofi-slide-nota b{color:#e8e9ea}
-#view-oficina .ofi-slide-recado{color:#4ade80;margin-left:8px;font-weight:600}
-
-/* cadeado na aba Ajustes do estoque */
+}#view-oficina .ofi-slide-nota b,#view-qualidade .ofi-slide-nota b{color:#e8e9ea}#view-oficina .ofi-slide-recado,#view-qualidade .ofi-slide-recado{color:#4ade80;margin-left:8px;font-weight:600}/* cadeado na aba Ajustes do estoque */
 #view-estoque nav .trava{font-size:10px;opacity:.75;letter-spacing:0;margin-left:2px}
+
+/* cabeçalho e caixa de link do painel de qualidade */
+#view-qualidade .title-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#view-qualidade .btn-voltar{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;text-transform:uppercase;
+  letter-spacing:.12em;font-size:12px;padding:8px 14px;cursor:pointer;border-radius:0;
+  background:transparent;color:#8b9095;border:1px solid #34393e;transition:.15s;
+}
+#view-qualidade .btn-voltar:hover{border-color:#ffce00;color:#ffce00}
+#view-qualidade .qual-box{
+  margin-top:26px;padding:16px;border:1px solid #34393e;background:#1f2225;max-width:760px;
+}
+#view-qualidade .qual-box-tit{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;text-transform:uppercase;
+  letter-spacing:.14em;font-size:12px;color:#ffce00;margin-bottom:12px;
+}
+#view-qualidade .qual-linha{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#view-qualidade .qual-box-sub{margin:-6px 0 12px;font-family:"Barlow",sans-serif;font-size:12px;color:#8b9095;line-height:1.5;max-width:620px}
+#view-qualidade .qual-mes{display:flex;align-items:center;gap:8px}
+#view-qualidade .qual-mes label{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif;text-transform:uppercase;
+  letter-spacing:.14em;font-size:10.5px;color:#8b9095;
+}
+#view-qualidade .qual-mes select{
+  font-family:"Barlow",sans-serif;font-size:13px;font-weight:600;padding:8px 12px;border-radius:0;
+  background:#1f2225;color:#ffce00;border:1px solid #34393e;min-width:150px;cursor:pointer;
+}
+#view-qualidade .qual-mes select:focus{outline:none;border-color:#ffce00}
+#view-qualidade .qual-linha input{
+  flex:1 1 340px;min-width:220px;font-family:"IBM Plex Mono",monospace;font-size:12px;
+  padding:8px 10px;background:#16181a;border:1px solid #34393e;color:#e8e9ea;border-radius:0;
+}
+#view-qualidade .qual-linha input:focus{outline:none;border-color:#ffce00}
+#view-qualidade .qual-box-nota{margin-top:10px;font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.6}
+#view-qualidade .qual-neutro{color:#8b9095}
+#view-qualidade .qual-ok{color:#4ade80}
+#view-qualidade .qual-erro{color:#fbbf24}
+#view-qualidade #qualVozTable td{white-space:normal;line-height:1.5}
 
 /* barra "planilha guardada" na aba Ajustes do estoque */
 #view-estoque .salvo-bar{
@@ -718,6 +735,105 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
 #view-vendas .historico b{color:var(--amarelo);font-weight:600}
 #view-vendas .historico span{color:var(--apagado)}
 @media(prefers-reduced-motion:reduce){#view-vendas *{transition:none!important}}
+
+/* ===================== PAINEL DE QUALIDADE ===================== */
+#view-qualidade{
+  --asfalto:#16181a; --chapa:#1f2225; --chapa-alta:#26292d; --risco:#34393e;
+  --amarelo:#ffce00; --texto:#e8e9ea; --apagado:#8b9095;
+  --ok:#4ade80; --alerta:#f87171; --atencao:#fbbf24;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --corpo:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Courier New",monospace;
+  /* aliases usados no restante do arquivo */
+  --bg:var(--asfalto); --panel:var(--chapa); --panel2:var(--chapa-alta);
+  --line:var(--risco); --line-strong:var(--risco);
+  --text:var(--texto); --text2:var(--apagado); --text3:#6d7378;
+  --yellow:var(--amarelo); --yellow-bg:rgba(255,206,0,.13);
+}
+#view-qualidade *{box-sizing:border-box}
+#view-qualidade{margin:0;padding:0}
+#view-qualidade{background:var(--asfalto);color:var(--texto);font-family:var(--corpo);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+#view-qualidade .wrap{max-width:1360px;margin:0 auto;padding:24px 18px 72px}
+#view-qualidade .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:2px solid var(--amarelo);padding-bottom:12px;margin-bottom:0}
+#view-qualidade .title-wrap{display:flex;align-items:center;gap:14px}
+#view-qualidade .logo{height:44px;width:auto;display:block}
+#view-qualidade h1{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(26px,4.4vw,40px);letter-spacing:.02em;line-height:.95;margin:0}
+#view-qualidade h1 .hl{color:var(--amarelo)}
+#view-qualidade .selo{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--asfalto);background:var(--amarelo);border:0;border-radius:0;padding:5px 10px;white-space:nowrap;font-weight:500}
+#view-qualidade .rule{display:none}
+#view-qualidade .subrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:14px 0 12px}
+#view-qualidade .sub{font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--apagado)}
+#view-qualidade .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+#view-qualidade button{font-family:var(--mono);font-size:12px;border-radius:0;border:1px solid var(--risco);background:var(--asfalto);color:var(--texto);padding:7px 13px;cursor:pointer;transition:all .12s}
+#view-qualidade button:hover{border-color:var(--amarelo);color:var(--amarelo)}
+#view-qualidade button.primary{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:12px;padding:8px 14px;background:var(--amarelo);border-color:var(--amarelo);color:var(--asfalto)}
+#view-qualidade button.primary:hover{background:#ffdc4d;color:var(--asfalto)}
+#view-qualidade .icon{width:14px;height:14px;vertical-align:-2px;stroke:currentColor;fill:none;stroke-width:2}
+#view-qualidade .statusbar{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--apagado);letter-spacing:.05em;margin:0 0 18px}
+#view-qualidade .dot{width:7px;height:7px;border-radius:50%;background:var(--apagado);flex:0 0 auto}
+#view-qualidade .dot.ok{background:var(--ok)}
+#view-qualidade .dot.load{background:var(--amarelo);animation:pulse .8s infinite alternate}
+#view-qualidade .dot.err{background:var(--alerta)}
+@keyframes pulse{0%{opacity:.4}100%{opacity:1}}
+#view-qualidade .kpibar{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:1px;background:var(--risco);border:1px solid var(--risco);border-radius:0;overflow:hidden;margin:20px 0 22px}
+#view-qualidade .kpi{background:var(--chapa);padding:12px 14px}
+#view-qualidade .kpi .lbl{font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--apagado);margin-bottom:3px}
+#view-qualidade .kpi .val{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.1;color:var(--texto)}
+#view-qualidade .kpi.accent .val{color:var(--amarelo)}
+#view-qualidade .kpi .hint{font-family:var(--mono);font-size:10px;color:var(--apagado);letter-spacing:.04em;margin-top:2px}
+#view-qualidade .tabs{display:flex;gap:1px;background:var(--risco);border:1px solid var(--risco);border-radius:0;overflow:hidden;margin-bottom:20px;flex-wrap:wrap}
+#view-qualidade .tab{flex:1;min-width:104px;text-align:center;font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:13px;padding:12px 8px;border:0;border-radius:0;background:var(--chapa);color:var(--apagado);cursor:pointer}
+#view-qualidade .tab:hover{background:var(--chapa-alta);color:var(--texto)}
+#view-qualidade .tab.active{background:var(--amarelo);color:var(--asfalto)}
+#view-qualidade .tabpane{display:none}
+#view-qualidade .tabpane.active{display:block}
+#view-qualidade .filterbar{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+#view-qualidade .filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+#view-qualidade .filter-row-all{margin-bottom:2px}
+#view-qualidade .chip{font-family:var(--mono);font-size:12px;border-radius:0;border:1px solid var(--risco);background:var(--asfalto);color:var(--texto);padding:7px 13px;cursor:pointer;transition:all .12s;white-space:nowrap}
+#view-qualidade .chip:hover{border-color:var(--amarelo);color:var(--amarelo)}
+#view-qualidade .chip.active{background:var(--amarelo);border-color:var(--amarelo);color:var(--asfalto);font-weight:500}
+#view-qualidade .chip-praca-btn{font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;font-weight:600;color:var(--apagado);background:transparent;border-style:dashed;padding:7px 12px;min-width:104px;text-align:center;flex:0 0 auto}
+#view-qualidade .chip-praca-btn:hover{color:var(--amarelo);border-color:var(--amarelo)}
+#view-qualidade .chip-praca-btn.active{background:var(--yellow-bg);border-color:var(--amarelo);border-style:solid;color:var(--amarelo)}
+#view-qualidade .sec-title{font-family:var(--display);font-weight:600;text-transform:uppercase;font-size:12px;letter-spacing:.16em;color:var(--apagado);display:flex;align-items:center;gap:8px;margin:0 0 6px}
+#view-qualidade .sec-title::before{content:'';width:3px;height:12px;background:var(--amarelo);border-radius:1px;flex:0 0 auto}
+#view-qualidade .sec-note{font-family:var(--mono);font-size:11px;color:var(--apagado);letter-spacing:.03em;margin:0 0 14px}
+#view-qualidade .grid{display:grid;gap:1px;margin-bottom:26px;background:var(--risco);border:1px solid var(--risco)}
+#view-qualidade .card{background:var(--chapa);border:0;border-radius:0;padding:14px 16px}
+#view-qualidade .taxa .head{font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--apagado);margin-bottom:6px;font-weight:600;display:flex;align-items:center;gap:6px}
+#view-qualidade .taxa .pct{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1;letter-spacing:-.02em}
+#view-qualidade .taxa .den{font-family:var(--mono);font-size:10px;color:var(--apagado);letter-spacing:.04em;margin-top:4px}
+#view-qualidade .taxa .bar{height:5px;border-radius:0;background:var(--asfalto);margin-top:10px;overflow:hidden}
+#view-qualidade .taxa .bar > div{height:100%}
+#view-qualidade .tablewrap{border:1px solid var(--risco);border-radius:0;overflow:hidden;margin-bottom:26px;background:var(--chapa)}
+#view-qualidade .tablescroll{overflow-x:auto}
+#view-qualidade table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px}
+#view-qualidade th{background:var(--amarelo);color:var(--asfalto);font-family:var(--display);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:8px 8px;text-align:left;white-space:nowrap;border:1px solid var(--risco)}
+#view-qualidade th.sortable{cursor:pointer;user-select:none}
+#view-qualidade th.sortable:hover{background:#ffdc4d}
+#view-qualidade th.active{background:var(--asfalto);color:var(--amarelo)}
+#view-qualidade th.r,#view-qualidade td.r{text-align:right}
+#view-qualidade th.c,#view-qualidade td.c{text-align:center}
+#view-qualidade td{background:var(--chapa);color:var(--texto);padding:6px 8px;border:1px solid var(--risco);white-space:nowrap;vertical-align:middle}
+#view-qualidade tr:hover td{background:var(--chapa-alta)}
+#view-qualidade .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 7px;border-radius:2px;font-weight:600;white-space:nowrap;letter-spacing:.02em}
+#view-qualidade .pill.rev{background:#422006;color:var(--atencao);border:1px solid #713f12}
+#view-qualidade .pill.sim{background:#052e16;color:var(--ok);border:1px solid #14532d}
+#view-qualidade .pill.nao{background:#450a0a;color:var(--alerta);border:1px solid #7f1d1d}
+#view-qualidade .pill.pend{background:var(--chapa-alta);color:var(--apagado);border:1px solid var(--risco)}
+#view-qualidade .v-up{color:var(--ok);font-weight:600}
+#view-qualidade .v-eq{color:var(--atencao);font-weight:600}
+#view-qualidade .v-down{color:var(--alerta);font-weight:600}
+#view-qualidade .dim{color:var(--apagado)}
+#view-qualidade .dim-zero,#view-qualidade td.dim:empty{color:#4e5359}
+#view-qualidade .foot-row td{background:var(--chapa-alta);border-top:1px solid var(--amarelo);font-weight:600}
+#view-qualidade .total-row td{background:#101214;border-top:2px solid var(--amarelo);font-weight:600;color:var(--texto)}
+#view-qualidade .meta-row td{background:rgba(255,206,0,.05);font-size:10.5px;color:var(--apagado);font-style:normal;letter-spacing:.06em;padding:5px 8px}
+#view-qualidade .muted-note{font-family:var(--mono);font-size:10.5px;color:var(--apagado);line-height:1.7;letter-spacing:.03em;margin-top:10px;border-top:1px solid var(--risco);padding-top:12px}
+#view-qualidade select{font-family:var(--mono)!important;font-size:12px!important;border-radius:0!important;border:1px solid var(--risco)!important;background:var(--asfalto)!important;color:var(--texto)!important;padding:7px 12px!important}
+@media(max-width:900px){#view-qualidade .wrap{padding:14px 12px 50px}}
+@media(max-width:600px){#view-qualidade .kpi .val{font-size:20px}}
 </style>
 </head>
 <body>
@@ -1197,7 +1313,99 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
   </div>
 </div>
 
-<!-- ================== TELA 5 · PAINÉIS EM CONSTRUÇÃO ================== -->
+<!-- ====================== TELA 5 · PAINEL DE QUALIDADE ====================== -->
+<div id="view-qualidade">
+  <div class="wrap">
+<div class="topbar">
+  <div class="title-wrap">
+    <button class="btn-voltar" onclick="irParaHome()" title="Voltar para a Central">&larr; Central</button>
+    <h1>PAINEL DE <span class="hl">QUALIDADE</span></h1>
+  </div>
+  <div class="selo">AGOSTO 2026 · RENAULT</div>
+</div>
+<hr class="rule">
+
+<div class="subrow">
+  <div class="sub">Resumo VOC · satisfação, retorno e reputação por loja</div>
+  <div class="controls">
+    <div class="qual-mes">
+      <label for="qualMes">Mês</label>
+      <select id="qualMes" onchange="qualTrocarMes()"><option>—</option></select>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-family:var(--display);font-size:10.5px;color:var(--apagado);text-transform:uppercase;letter-spacing:.14em;">Última atualização</div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--texto);font-weight:600;" id="qualUpdate">—</div>
+    </div>
+    <button class="primary" onclick="qualBuscar(true)">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.8 1 6.4 2.6"/><path d="M21 3v6h-6"/></svg>
+      Atualizar agora
+    </button>
+  </div>
+</div>
+
+<div class="statusbar"><span class="dot" id="qualDot"></span><span id="qualStatus">Iniciando…</span></div>
+
+<div class="kpibar" id="qualKpis"></div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+  <div class="sec-title" style="margin:0;">Resumo VOC por loja <span class="dim" style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:.02em;color:var(--apagado);">· objetivos 2026</span></div>
+  <div class="ofi-acoes">
+    <span class="dim" style="font-size:11px;">clique no cabeçalho para ordenar</span>
+    <button class="ofi-btn" id="btnOrdemQual" onclick="qualOrdemPadrao()">Ordenação padrão</button>
+    <button class="ofi-btn amarelo" onclick="qualAbrirSlide()">Slide</button>
+  </div>
+</div>
+<div class="sec-note">Verde = dentro do objetivo · vermelho = fora. Objetivos: VOC Index mês e 3M ≥ 90%, retorno ≤ 7%, GMB ≥ 4,8 estrelas, taxa de resposta 100%.</div>
+<div class="tablewrap"><div class="tablescroll"><table id="qualTable"></table></div></div>
+
+<div class="sec-title">Voz do cliente <span class="dim" style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:.02em;color:var(--apagado);">· motivo do retorno e verbalização</span></div>
+<div class="sec-note">Texto exatamente como está na planilha. Só aparecem as lojas com registro no mês.</div>
+<div class="tablewrap"><div class="tablescroll"><table id="qualVozTable"></table></div></div>
+
+<div class="qual-box">
+  <div class="qual-box-tit">Leitura automática · planilha do Google Sheets</div>
+  <div class="qual-box-sub">O painel lê todas as abas de mês da planilha publicada. Ao criar a aba de um novo mês, ela aparece sozinha no seletor.</div>
+  <div class="qual-linha">
+    <input id="qualUrl" type="text" spellcheck="false" placeholder="Link publicado da planilha (pub?output=csv)">
+    <button class="ofi-btn" onclick="qualSalvarUrl()">Salvar link</button>
+    <button class="ofi-btn" onclick="qualBuscar(true)">Buscar agora</button>
+  </div>
+  <div class="qual-box-nota" id="qualBoxNota"></div>
+</div>
+
+<div class="ofi-slide-overlay" id="qualSlideOverlay">
+  <div class="ofi-slide-box">
+    <div class="ofi-slide-topo">
+      <div class="ofi-slide-tit">Slide · Resumo VOC</div>
+      <div class="ofi-slide-ctrl">
+        <span class="ofi-slide-lab">Tamanho</span>
+        <select id="qualSlideTam" onchange="qualDesenharSlide()">
+          <option value="1200">Pequeno &nbsp;·&nbsp; 1200×675</option>
+          <option value="1600">Médio &nbsp;·&nbsp; 1600×900</option>
+          <option value="1920">Grande &nbsp;·&nbsp; 1920×1080</option>
+        </select>
+        <button class="ofi-btn amarelo" onclick="qualCopiar()">Copiar imagem</button>
+        <button class="ofi-btn" onclick="qualBaixar()">Baixar PNG</button>
+        <button class="ofi-btn" onclick="qualFecharSlide()">Fechar</button>
+      </div>
+    </div>
+    <div class="ofi-slide-tela"><canvas id="qualSlideCanvas" width="1200" height="675"></canvas></div>
+    <div class="ofi-slide-nota">
+      Clique em <b>Copiar imagem</b> e cole direto no WhatsApp ou no e-mail. Se o navegador bloquear a cópia,
+      ele baixa o PNG automaticamente. O slide sai na mesma ordem da tabela.
+      <span class="ofi-slide-recado" id="qualSlideRecado"></span>
+    </div>
+  </div>
+</div>
+
+<div class="muted-note">
+  Dados lidos da planilha Resumo VOC publicada como CSV no Google Sheets. O último resultado fica guardado
+  neste navegador, então o painel abre preenchido mesmo sem internet.
+</div>
+  </div>
+</div>
+
+<!-- ================== TELA 6 · PAINÉIS EM CONSTRUÇÃO ================== -->
 <div id="view-breve">
   <div class="breve-wrap">
     <div class="breve-topo">
@@ -4983,6 +5191,557 @@ window.irParaAbaVendas = function(aba){
 </script>
 
 <script>
+/* ===================== SCRIPT DO PAINEL DE QUALIDADE ===================== */
+/* o painel roda isolado: nada daqui colide com os outros painéis */
+(function(){
+
+// ── OBJETIVOS 2026 ───────────────────────────────────────────────────────────
+const OBJ = { vocMes:90, voc3m:90, retorno:7, gmb:4.8, resp:100 };
+
+// planilha publicada (Arquivo → Compartilhar → Publicar na Web)
+const URL_PADRAO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRmLjeMbLXp6KzYf5P0M4ROF5-OO51XOdDddP-tWwXyn49ziX9f5cYvFhbZ2sEIZWPaWAMbdh2VIzlG/pub?output=csv';
+const CHAVE_URL   = 'eurovia_qualidade_csv';
+const CHAVE_DADOS = 'eurovia_qualidade_dados';
+const CHAVE_MES   = 'eurovia_qualidade_mes';
+
+const ORDEM = ['IMBIRIBEIRA','PIEDADE','AFOGADOS','OLINDA','CABEDELO','EPITACIO','IGUATEMI','LAURO','CTA'];
+const ROTULO = {IMBIRIBEIRA:'Imbiribeira', PIEDADE:'Piedade', AFOGADOS:'Afogados', OLINDA:'Olinda',
+                CABEDELO:'Cabedelo', EPITACIO:'Epitácio', IGUATEMI:'Iguatemi', LAURO:'Lauro', CTA:'CTA'};
+
+const MESES = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO',
+               'SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+const MESES_BONITO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto',
+                      'Setembro','Outubro','Novembro','Dezembro'];
+
+// rótulos das linhas da planilha → campo interno
+const LINHAS = [
+  {campo:'vocMes',  achar:['VOC INDEX MES'],                      tipo:'num'},
+  {campo:'voc3m',   achar:['VOC INDEX 3M'],                       tipo:'num'},
+  {campo:'retorno', achar:['RETORNO MES','RETORNO DO MES'],       tipo:'num'},
+  {campo:'motivo',  achar:['MOTIVO DO RETORNO','MOTIVO RETORNO'], tipo:'txt'},
+  {campo:'verbal',  achar:['VERBALIZACAO'],                       tipo:'txt'},
+  {campo:'pesq',    achar:['PESQUISAS RESPONDIDAS'],              tipo:'num'},
+  {campo:'eleg',    achar:['CLIENTES ELEGIVEIS'],                 tipo:'num'},
+  {campo:'erep',    achar:['E-REPUTATION','E REPUTATION','EREPUTATION'], tipo:'num'},
+  {campo:'gmb',     achar:['NOTA ESTRELA GMB','ESTRELA GMB'],     tipo:'num'},
+  {campo:'resp',    achar:['TAXA DE RESPOSTA'],                   tipo:'num'}
+];
+
+let meses = [];            // [{nome, titulo, lojas:[...]}]
+let mesSel = null;         // nome da aba selecionada
+let carimbo = null;
+let ordemCampo = 'padrao', ordemDir = 'asc';
+
+const dadosMes = () => {
+  const m = meses.find(x => x.nome === mesSel) || meses[meses.length-1];
+  return m ? m.lojas : [];
+};
+
+// ── utilidades ───────────────────────────────────────────────────────────────
+const norm = t => String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                    .toUpperCase().replace(/\s+/g,' ').trim();
+
+function numBR(t){
+  if(t === null || t === undefined) return null;
+  if(typeof t === 'number') return t;
+  let s = String(t).trim();
+  if(!s || s === '-' || s === '–' || s === '—') return null;
+  s = s.replace(/%/g,'').replace(/\s/g,'');
+  if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+  const v = parseFloat(s);
+  return isNaN(v) ? null : v;
+}
+
+function parseCSVQual(texto){
+  const linhas = [];
+  let campo = '', linha = [], dentro = false;
+  for(let i = 0; i < texto.length; i++){
+    const c = texto[i];
+    if(dentro){
+      if(c === '"'){ if(texto[i+1] === '"'){ campo += '"'; i++; } else dentro = false; }
+      else campo += c;
+    } else {
+      if(c === '"') dentro = true;
+      else if(c === ','){ linha.push(campo); campo = ''; }
+      else if(c === '\n'){ linha.push(campo); linhas.push(linha); linha = []; campo = ''; }
+      else if(c !== '\r') campo += c;
+    }
+  }
+  if(campo.length || linha.length){ linha.push(campo); linhas.push(linha); }
+  return linhas;
+}
+
+// grade (matriz de células) → lista de lojas
+function interpretarGrade(grade){
+  if(!grade || !grade.length) throw new Error('aba vazia');
+
+  let iCab = -1, melhor = 0, colunas = {};
+  grade.forEach((linha, i) => {
+    const achadas = {};
+    (linha||[]).forEach((cel, j) => {
+      const n = norm(cel);
+      if(ORDEM.includes(n) && achadas[n] === undefined) achadas[n] = j;
+    });
+    const qtd = Object.keys(achadas).length;
+    if(qtd > melhor){ melhor = qtd; iCab = i; colunas = achadas; }
+  });
+  if(melhor < 3) throw new Error('não achei a linha com os nomes das lojas');
+
+  const bruto = {};
+  Object.keys(colunas).forEach(l => bruto[l] = {loja:l});
+
+  let indicadores = 0;
+  for(let i = iCab + 1; i < grade.length; i++){
+    const linha = grade[i] || [];
+    let rot = '';
+    for(let j = 0; j < linha.length && j < 3; j++){
+      if(String(linha[j]||'').trim()){ rot = norm(linha[j]); break; }
+    }
+    if(!rot) continue;
+    const def = LINHAS.find(d => d.achar.some(a => rot.includes(a)));
+    if(!def) continue;
+    indicadores++;
+    Object.keys(colunas).forEach(l => {
+      const cel = linha[colunas[l]];
+      bruto[l][def.campo] = def.tipo === 'num' ? numBR(cel) : String(cel||'').trim();
+    });
+  }
+  if(indicadores < 3) throw new Error('não achei os indicadores do VOC');
+
+  const lista = ORDEM.filter(l => bruto[l]).map(l => bruto[l]);
+  if(!lista.length) throw new Error('nenhuma loja com dados');
+  return lista;
+}
+
+// nome da aba → título ("AGOSTO" → "Agosto 2026")
+function tituloMes(nome){
+  const n = norm(nome);
+  const i = MESES.findIndex(m => n.includes(m));
+  if(i === -1) return String(nome).trim();
+  const ano = (String(nome).match(/20\d{2}/) || [])[0] || String(new Date().getFullYear());
+  return MESES_BONITO[i] + ' ' + ano;
+}
+function pesoMes(nome){
+  const n = norm(nome);
+  const i = MESES.findIndex(m => n.includes(m));
+  const ano = parseInt((String(nome).match(/20\d{2}/) || ['0'])[0]) || 0;
+  return ano*100 + (i === -1 ? 99 : i);
+}
+
+// ── totais do grupo ──────────────────────────────────────────────────────────
+function totais(lista){
+  const lojas = lista.filter(r => r.loja !== 'CTA');
+  const media = campo => {
+    const v = lojas.map(r => r[campo]).filter(x => typeof x === 'number');
+    return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null;
+  };
+  const soma = campo => lojas.reduce((a,r) => a + (typeof r[campo] === 'number' ? r[campo] : 0), 0);
+  return { loja:'EUROVIA', vocMes:media('vocMes'), voc3m:media('voc3m'), retorno:media('retorno'),
+           pesq:soma('pesq'), eleg:soma('eleg'), erep:media('erep'), gmb:media('gmb'), resp:media('resp') };
+}
+
+// ── formatação ───────────────────────────────────────────────────────────────
+const f1 = v => v === null || v === undefined ? '–' : v.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const f2 = v => v === null || v === undefined ? '–' : v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fInt = v => v === null || v === undefined ? '–' : Math.round(v).toLocaleString('pt-BR');
+const fPct = v => v === null || v === undefined ? '–' : f1(v) + '%';
+
+const classeMin = (v,alvo) => v === null || v === undefined ? 'dim' : (v >= alvo ? 'v-up' : 'v-down');
+const classeMax = (v,alvo) => v === null || v === undefined ? 'dim' : (v <= alvo ? 'v-up' : 'v-down');
+
+// cada indicador: rótulo, formato e cor — usado na tela e no slide
+const IND = [
+  {campo:'vocMes',  rot:'VOC Index mês',         fmt:fPct, cor:v => classeMin(v,OBJ.vocMes),  forte:1},
+  {campo:'voc3m',   rot:'VOC Index 3M',          fmt:fPct, cor:v => classeMin(v,OBJ.voc3m)},
+  {campo:'retorno', rot:'Retorno mês',           fmt:fPct, cor:v => classeMax(v,OBJ.retorno), forte:1},
+  {campo:'pesq',    rot:'Pesquisas respondidas', fmt:fInt, cor:() => ''},
+  {campo:'eleg',    rot:'Clientes elegíveis',    fmt:fInt, cor:() => 'dim'},
+  {campo:'erep',    rot:'Índice e-Reputation',   fmt:f1,   cor:() => ''},
+  {campo:'gmb',     rot:'Nota estrela GMB',      fmt:f2,   cor:v => classeMin(v,OBJ.gmb)},
+  {campo:'resp',    rot:'Taxa de resposta GMB',  fmt:fPct, cor:v => classeMin(v,OBJ.resp)}
+];
+
+// ── seletor de mês ───────────────────────────────────────────────────────────
+function desenharSeletor(){
+  const sel = document.getElementById('qualMes');
+  if(!sel) return;
+  if(!meses.length){ sel.innerHTML = '<option>—</option>'; sel.disabled = true; return; }
+  sel.disabled = false;
+  sel.innerHTML = meses.map(m =>
+    `<option value="${m.nome}"${m.nome === mesSel ? ' selected' : ''}>${m.titulo}</option>`).join('');
+}
+function trocarMes(){
+  mesSel = document.getElementById('qualMes').value;
+  try{ localStorage.setItem(CHAVE_MES, mesSel); }catch(e){}
+  redesenhar();
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────────────────
+function desenharKpis(){
+  const el = document.getElementById('qualKpis');
+  const dados = dadosMes();
+  if(!dados.length){ el.innerHTML = ''; return; }
+  const T = totais(dados);
+  const cartao = (rot,val,sub,cls) => `<div class="kpi"><div class="lbl">${rot}</div>`
+    + `<div class="val ${cls||''}">${val}</div><div class="hint">${sub}</div></div>`;
+  el.innerHTML = [
+    cartao('VOC Index mês', fPct(T.vocMes), 'objetivo ≥ ' + OBJ.vocMes + '%', classeMin(T.vocMes,OBJ.vocMes)),
+    cartao('VOC Index 3M',  fPct(T.voc3m),  'objetivo ≥ ' + OBJ.voc3m + '%',  classeMin(T.voc3m,OBJ.voc3m)),
+    cartao('Retorno médio', fPct(T.retorno),'objetivo ≤ ' + OBJ.retorno + '%',classeMax(T.retorno,OBJ.retorno)),
+    cartao('Pesquisas respondidas', fInt(T.pesq), fInt(T.eleg) + ' elegíveis'),
+    cartao('e-Reputation', f1(T.erep), 'média das lojas'),
+    cartao('Nota GMB', f2(T.gmb), 'objetivo ≥ ' + f1(OBJ.gmb), classeMin(T.gmb,OBJ.gmb))
+  ].join('');
+}
+
+// ── tabela da tela (loja por linha, padrão dos outros painéis) ───────────────
+const COLS = [
+  {k:'loja',    t:'Loja'},
+  {k:'vocMes',  t:'VOC mês',      n:1},
+  {k:'voc3m',   t:'VOC 3M',       n:1},
+  {k:'retorno', t:'Retorno',      n:1},
+  {k:'pesq',    t:'Pesquisas',    n:1},
+  {k:'eleg',    t:'Elegíveis',    n:1},
+  {k:'erep',    t:'e-Reputation', n:1},
+  {k:'gmb',     t:'GMB',          n:1},
+  {k:'resp',    t:'Taxa resp.',   n:1}
+];
+
+function ordenar(lista){
+  const pos = l => { const i = ORDEM.indexOf(l); return i === -1 ? 99 : i; };
+  if(ordemCampo === 'padrao') return lista.slice().sort((a,b) => pos(a.loja) - pos(b.loja));
+  if(ordemCampo === 'loja') return lista.slice().sort((a,b) =>
+    ordemDir === 'asc' ? a.loja.localeCompare(b.loja) : b.loja.localeCompare(a.loja));
+  return lista.slice().sort((a,b) => {
+    const x = (a[ordemCampo] === null || a[ordemCampo] === undefined) ? -Infinity : a[ordemCampo];
+    const y = (b[ordemCampo] === null || b[ordemCampo] === undefined) ? -Infinity : b[ordemCampo];
+    return ordemDir === 'asc' ? x - y : y - x;
+  });
+}
+
+function desenharTabela(){
+  const t = document.getElementById('qualTable');
+  const dados = dadosMes();
+  if(!dados.length){
+    t.innerHTML = '<tr><td class="dim" style="padding:18px;text-align:center;">'
+      + 'Sem dados ainda — confira o link da planilha no fim da página e clique em Buscar agora.</td></tr>';
+    return;
+  }
+  const linhas = ordenar(dados);
+  const T = totais(dados);
+  const seta = k => ordemCampo === k ? (ordemDir === 'asc' ? ' ↑' : ' ↓') : '';
+  const cab = '<tr>' + COLS.map(c =>
+    `<th class="sortable ${c.n?'r':''} ${ordemCampo===c.k?'active':''}" data-k="${c.k}">${c.t}${seta(c.k)}</th>`).join('') + '</tr>';
+
+  const meta = `<tr class="meta-row"><td>OBJETIVO</td>`
+    + `<td class="r">≥ ${OBJ.vocMes}%</td><td class="r">≥ ${OBJ.voc3m}%</td><td class="r">≤ ${OBJ.retorno}%</td>`
+    + `<td class="r dim">—</td><td class="r dim">—</td><td class="r dim">—</td>`
+    + `<td class="r">≥ ${f1(OBJ.gmb)}</td><td class="r">${OBJ.resp}%</td></tr>`;
+
+  const corpo = linhas.map(r => `<tr>`
+    + `<td>${ROTULO[r.loja] || r.loja}</td>`
+    + `<td class="r ${classeMin(r.vocMes,OBJ.vocMes)}">${fPct(r.vocMes)}</td>`
+    + `<td class="r ${classeMin(r.voc3m,OBJ.voc3m)}">${fPct(r.voc3m)}</td>`
+    + `<td class="r ${classeMax(r.retorno,OBJ.retorno)}">${fPct(r.retorno)}</td>`
+    + `<td class="r">${fInt(r.pesq)}</td>`
+    + `<td class="r dim">${fInt(r.eleg)}</td>`
+    + `<td class="r">${f1(r.erep)}</td>`
+    + `<td class="r ${classeMin(r.gmb,OBJ.gmb)}">${f2(r.gmb)}</td>`
+    + `<td class="r ${classeMin(r.resp,OBJ.resp)}">${fPct(r.resp)}</td>`
+    + `</tr>`).join('');
+
+  const tot = `<tr class="total-row"><td>EUROVIA</td>`
+    + `<td class="r ${classeMin(T.vocMes,OBJ.vocMes)}">${fPct(T.vocMes)}</td>`
+    + `<td class="r ${classeMin(T.voc3m,OBJ.voc3m)}">${fPct(T.voc3m)}</td>`
+    + `<td class="r ${classeMax(T.retorno,OBJ.retorno)}">${fPct(T.retorno)}</td>`
+    + `<td class="r">${fInt(T.pesq)}</td><td class="r">${fInt(T.eleg)}</td>`
+    + `<td class="r">${f1(T.erep)}</td>`
+    + `<td class="r ${classeMin(T.gmb,OBJ.gmb)}">${f2(T.gmb)}</td>`
+    + `<td class="r ${classeMin(T.resp,OBJ.resp)}">${fPct(T.resp)}</td></tr>`;
+
+  t.innerHTML = cab + meta + corpo + tot;
+  t.querySelectorAll('th[data-k]').forEach(th => th.onclick = () => {
+    const k = th.dataset.k;
+    if(ordemCampo === k) ordemDir = ordemDir === 'asc' ? 'desc' : 'asc';
+    else { ordemCampo = k; ordemDir = (k === 'loja') ? 'asc' : 'desc'; }
+    desenharTabela(); desenharVoz();
+    if(document.getElementById('qualSlideOverlay').classList.contains('on')) qualDesenharSlide();
+  });
+
+  const bp = document.getElementById('btnOrdemQual');
+  if(bp) bp.classList.toggle('ativo', ordemCampo === 'padrao');
+}
+
+function desenharVoz(){
+  const t = document.getElementById('qualVozTable');
+  const com = dadosMes().filter(r => (r.motivo && r.motivo !== '-') || (r.verbal && r.verbal !== '-'));
+  if(!com.length){
+    t.innerHTML = '<tr><td class="dim" style="padding:18px;text-align:center;">Nenhum retorno registrado no mês.</td></tr>';
+    return;
+  }
+  const limpa = s => String(s||'').replace(/^-$/,'').replace(/\s*\n\s*/g,' · ').trim() || '–';
+  t.innerHTML = '<tr><th>Loja</th><th class="r">Retorno</th><th>Motivo do retorno</th><th>Verbalização do cliente</th></tr>'
+    + ordenar(com).map(r => `<tr><td>${ROTULO[r.loja] || r.loja}</td>`
+        + `<td class="r ${classeMax(r.retorno,OBJ.retorno)}">${fPct(r.retorno)}</td>`
+        + `<td>${limpa(r.motivo)}</td><td>${limpa(r.verbal)}</td></tr>`).join('');
+}
+
+// ── status ───────────────────────────────────────────────────────────────────
+function status(tipo, msg){
+  const d = document.getElementById('qualDot'), s = document.getElementById('qualStatus');
+  const mapa = {loading:'load', ok:'ok', err:'err'};
+  if(d) d.className = 'dot' + (mapa[tipo] ? ' ' + mapa[tipo] : '');
+  if(s) s.textContent = msg;
+}
+function nota(msg, cls){
+  const el = document.getElementById('qualBoxNota');
+  if(el) el.innerHTML = '<span class="' + (cls || 'qual-neutro') + '">' + msg + '</span>';
+}
+function carimbar(){
+  const el = document.getElementById('qualUpdate');
+  if(!el) return;
+  if(!carimbo){ el.textContent = '—'; return; }
+  const d = new Date(carimbo);
+  el.textContent = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function redesenhar(){
+  desenharSeletor(); desenharKpis(); desenharTabela(); desenharVoz(); carimbar();
+  if(window.atualizarResumoQualidade) window.atualizarResumoQualidade();
+  if(document.getElementById('qualSlideOverlay').classList.contains('on')) qualDesenharSlide();
+}
+
+// ── leitura da planilha ──────────────────────────────────────────────────────
+function urlAtual(){
+  try{ return (localStorage.getItem(CHAVE_URL) || URL_PADRAO || '').trim(); }
+  catch(e){ return URL_PADRAO; }
+}
+const urlXlsx = u => u.replace(/output=csv/i, 'output=xlsx');
+const semCache = u => u + (u.includes('?') ? '&' : '?') + 'v=' + Date.now();
+
+function guardar(){
+  try{ localStorage.setItem(CHAVE_DADOS, JSON.stringify({v:2, em:carimbo, meses:meses})); }catch(e){}
+}
+function escolherMes(){
+  if(!meses.length) return null;
+  const agora = MESES[new Date().getMonth()];
+  const doMes = meses.find(m => norm(m.nome).includes(agora));
+  return doMes ? doMes.nome : meses[meses.length-1].nome;
+}
+function recuperar(){
+  try{
+    const raw = localStorage.getItem(CHAVE_DADOS);
+    const o = raw ? JSON.parse(raw) : null;
+    if(o && Array.isArray(o.meses) && o.meses.length){
+      meses = o.meses; carimbo = o.em || null;
+      mesSel = localStorage.getItem(CHAVE_MES);
+      if(!meses.some(m => m.nome === mesSel)) mesSel = escolherMes();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+// lê o arquivo inteiro (todas as abas) — meses novos entram sozinhos
+async function lerXlsx(url){
+  const r = await fetch(semCache(urlXlsx(url)));
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  const buf = await r.arrayBuffer();
+  const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+  const achados = [];
+  wb.SheetNames.forEach(nome => {
+    try{
+      const grade = XLSX.utils.sheet_to_json(wb.Sheets[nome], {header:1, defval:'', raw:false});
+      achados.push({nome:nome, titulo:tituloMes(nome), lojas:interpretarGrade(grade)});
+    }catch(e){ /* aba que não é de VOC: ignora */ }
+  });
+  if(!achados.length) throw new Error('nenhuma aba no formato do Resumo VOC');
+  achados.sort((a,b) => pesoMes(a.nome) - pesoMes(b.nome));
+  return achados;
+}
+
+// reserva: se o xlsx não vier, lê o CSV (só a primeira aba)
+async function lerCsv(url){
+  const r = await fetch(semCache(url));
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  const texto = await r.text();
+  if(/^\s*</.test(texto)) throw new Error('o link devolveu uma página, não um CSV');
+  return [{nome:'Atual', titulo:'Mês atual', lojas:interpretarGrade(parseCSVQual(texto))}];
+}
+
+async function qualBuscar(manual){
+  const url = urlAtual();
+  if(!url){
+    nota('Cole o link publicado da planilha para o painel ler sozinho.', 'qual-erro');
+    if(!dadosMes().length) status('', 'Sem link configurado');
+    return false;
+  }
+  status('loading', 'Lendo a planilha…');
+  if(manual) nota('Lendo a planilha…', 'qual-neutro');
+
+  let achados = null, aviso = '';
+  try{
+    achados = await lerXlsx(url);
+  }catch(e1){
+    console.warn('[Qualidade] xlsx:', e1.message);
+    try{
+      achados = await lerCsv(url);
+      aviso = ' — só a primeira aba veio; publique o documento inteiro para ver todos os meses';
+    }catch(e2){
+      console.warn('[Qualidade] csv:', e2.message);
+      const tem = dadosMes().length > 0;
+      status(tem ? 'ok' : 'err', tem ? 'Usando o último resultado guardado' : 'Falha ao ler a planilha');
+      nota('Não consegui ler (' + e2.message + ').'
+        + (tem ? ' Seguindo com o último resultado guardado neste navegador.' : ' Confira o link publicado.'), 'qual-erro');
+      return false;
+    }
+  }
+
+  meses = achados;
+  if(!meses.some(m => m.nome === mesSel)) mesSel = escolherMes();
+  carimbo = new Date().toISOString();
+  guardar();
+  redesenhar();
+  status('ok', meses.length + ' mês(es) na planilha · ' + dadosMes().length + ' loja(s)');
+  nota('Planilha lida: ' + meses.map(m => m.titulo).join(', ') + aviso + '.', 'qual-ok');
+  return true;
+}
+
+function qualSalvarUrl(){
+  const campo = document.getElementById('qualUrl');
+  const v = campo.value.trim();
+  try{ v ? localStorage.setItem(CHAVE_URL, v) : localStorage.removeItem(CHAVE_URL); }
+  catch(e){ nota('Não consegui guardar o link neste navegador.', 'qual-erro'); return; }
+  if(!v){ campo.value = URL_PADRAO; nota('Voltei para o link que já vem no arquivo.', 'qual-neutro'); }
+  qualBuscar(true);
+}
+
+function qualOrdemPadrao(){
+  ordemCampo = 'padrao'; ordemDir = 'asc';
+  desenharTabela(); desenharVoz();
+  if(document.getElementById('qualSlideOverlay').classList.contains('on')) qualDesenharSlide();
+}
+
+// ── slide: mesma orientação da planilha (indicador na linha, loja na coluna) ──
+function qualDesenharSlide(){
+  const cv = document.getElementById('qualSlideCanvas');
+  const dados = dadosMes();
+  if(!cv || !dados.length) return;
+  const sel = document.getElementById('qualSlideTam');
+  const W = sel ? parseInt(sel.value) : 1200;
+  const H = Math.round(W*675/1200);
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  const m = meses.find(x => x.nome === mesSel);
+  const area = molduraEstoque(ctx, W, H, 'Qualidade - ' + (m ? m.titulo : ''),
+    `VOC Index ≥ ${OBJ.vocMes}%  ·  Retorno ≤ ${OBJ.retorno}%  ·  GMB ≥ ${f1(OBJ.gmb)}`);
+
+  const apagado = '#9aa0a6';
+  const corDe = c => c === 'v-up' ? CORES_SLIDE.ok
+                   : c === 'v-down' ? CORES_SLIDE.alerta
+                   : c === 'dim' ? apagado : CORES_SLIDE.texto;
+
+  const lojas = ordenar(dados);
+  const T = totais(dados);
+
+  const cols = [{rot:'Indicador', esq:true}]
+    .concat(lojas.map(r => ({rot:ROTULO[r.loja] || r.loja, mono:true})))
+    .concat([{rot:'EUROVIA', mono:true}]);
+
+  const linhas = IND.map(ind => {
+    const cel = [{t:ind.rot, forte:true}];
+    lojas.forEach(r => {
+      const v = r[ind.campo];
+      cel.push({t:ind.fmt(v), cor:(v === null || v === undefined) ? apagado : corDe(ind.cor(v)),
+                forte:!!ind.forte});
+    });
+    cel.push({t:ind.fmt(T[ind.campo]), cor:CORES_SLIDE.amarelo, forte:true});
+    return cel;
+  });
+
+  tabelaOficina(ctx, area, cols, linhas, null);
+}
+
+async function qualAbrirSlide(){
+  if(!dadosMes().length){ status('err', 'Sem dados para gerar o slide'); return; }
+  document.getElementById('qualSlideOverlay').classList.add('on');
+  document.getElementById('qualSlideRecado').textContent = '';
+  await carregarLogo();
+  qualDesenharSlide();
+}
+function qualFecharSlide(){
+  document.getElementById('qualSlideOverlay').classList.remove('on');
+}
+async function qualCopiar(){
+  const cv = document.getElementById('qualSlideCanvas');
+  try{
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+    const el = document.getElementById('qualSlideRecado');
+    el.textContent = 'Imagem copiada!';
+    setTimeout(() => el.textContent = '', 2500);
+  }catch(e){
+    qualBaixar();
+    document.getElementById('qualSlideRecado').textContent = 'Cópia bloqueada — baixei o PNG.';
+  }
+}
+function qualBaixar(){
+  const cv = document.getElementById('qualSlideCanvas');
+  const m = meses.find(x => x.nome === mesSel);
+  const a = document.createElement('a');
+  a.download = 'eurovia-qualidade-' + norm(m ? m.titulo : 'voc').toLowerCase().replace(/\s+/g,'-') + '.png';
+  a.href = cv.toDataURL('image/png');
+  a.click();
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    const ov = document.getElementById('qualSlideOverlay');
+    if(ov && ov.classList.contains('on')) qualFecharSlide();
+  }
+});
+
+// ── ponte com a Central ──────────────────────────────────────────────────────
+window.getQualidadeResumo = function(){
+  const dados = dadosMes();
+  if(!dados.length) return null;
+  const T = totais(dados);
+  const m = meses.find(x => x.nome === mesSel);
+  return { vocMes:T.vocMes, voc3m:T.voc3m, retorno:T.retorno, pesq:T.pesq, eleg:T.eleg,
+           erep:T.erep, gmb:T.gmb, resp:T.resp, mes:m ? m.titulo : null,
+           lojas:dados.filter(r => r.loja !== 'CTA').length, em:carimbo, origem:'planilha' };
+};
+
+window.qualBuscar = qualBuscar;
+window.qualSalvarUrl = qualSalvarUrl;
+window.qualOrdemPadrao = qualOrdemPadrao;
+window.qualTrocarMes = trocarMes;
+window.qualAbrirSlide = qualAbrirSlide;
+window.qualFecharSlide = qualFecharSlide;
+window.qualDesenharSlide = qualDesenharSlide;
+window.qualCopiar = qualCopiar;
+window.qualBaixar = qualBaixar;
+
+// ── início ───────────────────────────────────────────────────────────────────
+const campoUrl = document.getElementById('qualUrl');
+if(campoUrl) campoUrl.value = urlAtual();
+
+if(recuperar()){
+  redesenhar();
+  status('ok', 'Último resultado guardado · ' + dadosMes().length + ' loja(s)');
+  nota('Mostrando o último resultado guardado. Buscando atualização…', 'qual-neutro');
+} else {
+  desenharSeletor(); desenharTabela(); desenharVoz();
+  status('', 'Sem dados');
+}
+qualBuscar(false);
+
+})();
+
+</script>
+
+<script>
 /* ===================== SCRIPT DA TELA INICIAL ===================== */
 const CONFIG = {
   titulo:   'CENTRAL',      // primeira palavra (branca)
@@ -5073,6 +5832,12 @@ function resumoVendas(){
            diasUteis:0, metaDiaria:V.metaDiaria, lojas:0, em:null, origem:'config' };
 }
 
+/* ---- resumo de qualidade: números vivos da planilha VOC ---- */
+function resumoQualidade(){
+  const q = window.getQualidadeResumo ? window.getQualidadeResumo() : null;
+  return q || { origem:'vazio' };
+}
+
 /* ---- resumo da oficina: dados vivos da planilha > cache > CONFIG ---- */
 function resumoOficina(){
   const D = (window.getOficinaData ? window.getOficinaData() : null);
@@ -5101,7 +5866,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v7 · 25/08';
+const VERSAO = 'v9 · 25/08';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
@@ -5114,7 +5879,7 @@ document.title = CONFIG.titulo + ' ' + CONFIG.destaque + ' · Renault';
 
 /* ---- desenha KPIs + cards ---- */
 function renderHome(){
-  const V = resumoVendas(), E = resumoEstoque(), O = resumoOficina();
+  const V = resumoVendas(), E = resumoEstoque(), O = resumoOficina(), Q = resumoQualidade();
 
   const pctMeta  = pct(V.vendas, V.meta);
   const pctPagos = pct(E.pagos, E.total);
@@ -5153,6 +5918,26 @@ function renderHome(){
     descEstoque = 'Nenhuma planilha carregada. Abra o painel e anexe a planilha de estoque na aba Ajustes.';
     metricasEstoque = [{r:'Em estoque', v:'—'},{r:'Pagos', v:'—'},{r:'Dias méd', v:'—'}];
     barraEstoque = {esq:'Veículos pagos', dir:'aguardando planilha', pct:0};
+  }
+
+  /* card de qualidade */
+  let descQual, metricasQual, barraQual, seloQual;
+  const f1q = v => (v === null || v === undefined) ? '—' : n1(v);
+  if (Q.origem === 'planilha'){
+    descQual = `${n(Q.pesq)} pesquisa(s) respondida(s) de ${n(Q.eleg)} elegíveis`
+      + ` · e-Reputation médio ${f1q(Q.erep)} · ${n(Q.lojas)} loja(s) apuradas.`;
+    metricasQual = [
+      {r:'VOC mês', v:f1q(Q.vocMes) + '%', c:(Q.vocMes !== null && Q.vocMes < 90) ? 'alerta' : 'amarelo'},
+      {r:'Retorno', v:f1q(Q.retorno) + '%', c:(Q.retorno !== null && Q.retorno > 7) ? 'alerta' : ''},
+      {r:'Nota GMB', v:Q.gmb === null ? '—' : Q.gmb.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+    ];
+    barraQual = {esq:'VOC Index do mês', dir:`${f1q(Q.vocMes)}% / 90%`, pct:Math.round(Q.vocMes || 0)};
+    seloQual = seloHora(Q.em) || 'dados da planilha';
+  } else {
+    descQual = 'VOC Index mês e 3M, retorno, verbalização do cliente, e-Reputation e nota GMB por loja.';
+    metricasQual = [{r:'VOC mês', v:'—'},{r:'Retorno', v:'—'},{r:'Nota GMB', v:'—'}];
+    barraQual = {esq:'VOC Index do mês', dir:'aguardando planilha', pct:0};
+    seloQual = 'sem planilha';
   }
 
   /* card de vendas */
@@ -5215,6 +6000,13 @@ function renderHome(){
       selo: seloEstoque
     },
     {
+      id:'qualidade', nome:'Painel de', destaque:'Qualidade', link:'#qualidade', interno:'qualidade',
+      desc:descQual,
+      metricas:metricasQual,
+      barra:barraQual,
+      selo:seloQual
+    },
+    {
       id:'oficina', nome:'Painel de', destaque:'Oficina', link:'#oficina', interno:'oficina',
       desc:descOficina,
       metricas:metricasOficina,
@@ -5246,6 +6038,7 @@ function renderHome(){
       const alvo = a.dataset.interno;
       if (alvo === 'oficina') irParaOficina();
       else if (alvo === 'vendas') irParaVendas();
+      else if (alvo === 'qualidade') irParaQualidade();
       else irParaEstoque();
     });
   });
@@ -5273,14 +6066,10 @@ function renderHome(){
 window.atualizarResumoEstoque = renderHome;
 window.atualizarResumoOficina = renderHome;
 window.atualizarResumoVendas  = renderHome;
+window.atualizarResumoQualidade = renderHome;
 
 /* ---- painéis em construção ---- */
 const PAINEIS_FUTUROS = [
-  {rota:'qualidade', destaque:'Qualidade', titulo:'Painel de <em>qualidade</em>',
-   desc:'VOC Index do mês e 3M, taxa de retorno, motivo do retorno, verbalização do cliente, e-Reputation e nota GMB por loja.',
-   itens:['VOC Index mês e 3M contra o objetivo de 90%','Retorno do mês e motivo declarado',
-          'Verbalização do cliente por loja','Pesquisas respondidas e clientes elegíveis',
-          'Índice e-Reputation, nota estrela GMB e taxa de resposta']},
   {rota:'leads', destaque:'Leads', titulo:'Painel de <em>leads</em>',
    desc:'Entrantes, encaminhamentos, agendamentos, fluxo e conversão em venda — por loja e por praça.',
    itens:['Entrantes, encaminhados e % de encaminhamento','Agendamentos e comparecimento em fluxo',
@@ -5305,7 +6094,7 @@ function irParaBreve(rota){
 window.irParaBreve = irParaBreve;
 
 /* ---- navegação entre as telas ---- */
-const TELAS = ['view-home','view-estoque','view-oficina','view-vendas','view-breve'];
+const TELAS = ['view-home','view-estoque','view-oficina','view-vendas','view-qualidade','view-breve'];
 function mostrarTela(id){
   TELAS.forEach(v => document.getElementById(v).classList.toggle('on', v === id));
   window.scrollTo(0,0);
@@ -5326,6 +6115,10 @@ function irParaVendas(){
   mostrarTela('view-vendas');
   if (location.hash !== '#vendas') location.hash = '#vendas';
 }
+function irParaQualidade(){
+  mostrarTela('view-qualidade');
+  if (location.hash !== '#qualidade') location.hash = '#qualidade';
+}
 function irParaHome(){
   mostrarTela('view-home');
   renderHome();
@@ -5334,6 +6127,7 @@ function irParaHome(){
 window.irParaEstoque = irParaEstoque;
 window.irParaOficina = irParaOficina;
 window.irParaVendas  = irParaVendas;
+window.irParaQualidade = irParaQualidade;
 window.irParaHome = irParaHome;
 
 function aplicarRota(){
@@ -5341,6 +6135,7 @@ function aplicarRota(){
   if (h === '#estoque') irParaEstoque();
   else if (h === '#oficina') irParaOficina();
   else if (h === '#vendas') irParaVendas();
+  else if (h === '#qualidade') irParaQualidade();
   else if (PAINEIS_FUTUROS.some(p => h === '#' + p.rota)) irParaBreve(h.slice(1));
   else mostrarTela('view-home');
 }
