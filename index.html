@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CENTRAL EUROVIA · build v9 · 25/08 -->
+<!-- CENTRAL EUROVIA · build v11 · 25/08 -->
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -215,6 +215,11 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
 #view-qualidade .qual-ok{color:#4ade80}
 #view-qualidade .qual-erro{color:#fbbf24}
 #view-qualidade #qualVozTable td{white-space:normal;line-height:1.5}
+#view-qualidade #qualTable .ind-rot{cursor:pointer;font-weight:600;white-space:nowrap;user-select:none}
+#view-qualidade #qualTable .ind-rot:hover{color:#ffce00}
+#view-qualidade #qualTable .ind-rot.active{color:#ffce00}
+#view-qualidade #qualTable .col-grupo{color:#ffce00;font-weight:700;background:rgba(255,206,0,.05)}
+#view-qualidade #qualTable th.active{color:#ffce00}
 
 /* barra "planilha guardada" na aba Ajustes do estoque */
 #view-estoque .salvo-bar{
@@ -1350,12 +1355,12 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
   <div class="sec-title" style="margin:0;">Resumo VOC por loja <span class="dim" style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:.02em;color:var(--apagado);">· objetivos 2026</span></div>
   <div class="ofi-acoes">
-    <span class="dim" style="font-size:11px;">clique no cabeçalho para ordenar</span>
+    <span class="dim" style="font-size:11px;">clique no nome do indicador para ordenar as lojas</span>
     <button class="ofi-btn" id="btnOrdemQual" onclick="qualOrdemPadrao()">Ordenação padrão</button>
     <button class="ofi-btn amarelo" onclick="qualAbrirSlide()">Slide</button>
   </div>
 </div>
-<div class="sec-note">Verde = dentro do objetivo · vermelho = fora. Objetivos: VOC Index mês e 3M ≥ 90%, retorno ≤ 7%, GMB ≥ 4,8 estrelas, taxa de resposta 100%.</div>
+<div class="sec-note">Mesmo formato da planilha: indicador na linha, loja na coluna. Verde = dentro do objetivo · vermelho = fora.</div>
 <div class="tablewrap"><div class="tablescroll"><table id="qualTable"></table></div></div>
 
 <div class="sec-title">Voz do cliente <span class="dim" style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:.02em;color:var(--apagado);">· motivo do retorno e verbalização</span></div>
@@ -1646,13 +1651,13 @@ function renderResumo() {
         gQ += r.qtde; gD.push(...r.diasList); gMax = Math.max(gMax,dMax); gPag += r.pagos; gV += r.valor;
 
         html += `<tr>
-          ${i===0 ? `<td class="est-td left" rowspan="${lF.length}" style="border-left:3px solid ${corP};font-weight:700;color:${corP};white-space:nowrap;font-size:.58rem">${praca}</td>` : ''}
-          ${i===0 ? `<td class="est-td left" rowspan="${lF.length}" style="color:${corF};font-weight:600;font-size:.58rem">
+          ${i===0 ? `<td class="est-td left" rowspan="${lF.length}" style="border-left:3px solid ${corP};font-weight:700;color:${corP};white-space:nowrap;font-size:.82rem">${praca}</td>` : ''}
+          ${i===0 ? `<td class="est-td left" rowspan="${lF.length}" style="color:${corF};font-weight:600;font-size:.82rem">
             <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${corF};margin-right:3px;vertical-align:middle"></span>${fam}
-            <span style="font-size:.52rem;color:var(--muted);display:block">${fQ}un·${fPag}pg</span>
+            <span style="font-size:.7rem;color:var(--muted);display:block">${fQ}un·${fPag}pg</span>
           </td>` : ''}
-          <td class="est-td left" style="font-size:.6rem">${r.modelo}</td>
-          <td class="est-td" style="font-weight:700;font-size:.85rem">${r.qtde}</td>
+          <td class="est-td left" style="font-size:.82rem">${r.modelo}</td>
+          <td class="est-td" style="font-weight:700;font-size:.95rem">${r.qtde}</td>
           <td class="est-td">${r.pagos > 0 ? `<span class="pago-pill">${r.pagos}</span>` : '—'}</td>
           <td class="est-td">${diasPill(dMed)}</td>
         </tr>`;
@@ -1663,7 +1668,7 @@ function renderResumo() {
     const pMax = pD.length ? Math.max(...pD) : 0;
     html += `<tr class="tot-row">
       <td class="est-td left" colspan="3" style="color:${corP}">▸ TOTAL ${praca}</td>
-      <td class="est-td" style="color:${corP};font-size:.85rem;font-weight:700">${pQ}</td>
+      <td class="est-td" style="color:${corP};font-size:.95rem;font-weight:700">${pQ}</td>
       <td class="est-td" style="color:var(--pink)">${pPag}</td>
       <td class="est-td">${diasPill(pMed)}</td>
     </tr>`;
@@ -1671,8 +1676,8 @@ function renderResumo() {
 
   const gMed = gD.length ? Math.round(gD.reduce((a,b)=>a+b,0)/gD.length) : 0;
   html += `<tr class="tot-row">
-    <td class="est-td left" colspan="3" style="color:var(--accent);font-size:.8rem">◆ TOTAL EUROVIA</td>
-    <td class="est-td" style="color:var(--accent);font-size:1rem;font-weight:700">${gQ}</td>
+    <td class="est-td left" colspan="3" style="color:var(--accent);font-size:.9rem">◆ TOTAL EUROVIA</td>
+    <td class="est-td" style="color:var(--accent);font-size:1.1rem;font-weight:700">${gQ}</td>
     <td class="est-td" style="color:var(--pink)">${gPag}</td>
     <td class="est-td">${diasPill(gMed)}</td>
   </tr>`;
@@ -4179,7 +4184,7 @@ function slideCadencia(ctx,W,H){
 }
 
 function slideSemanal(ctx,W,H){
-  const area=molduraSlide(ctx,W,H,`Vendas por Semana – ${mesDoPainel()}`,null);
+  const area=molduraSlide(ctx,W,H,`COMPARATIVO VENDAS SEMANAL - ${mesDoPainel().toUpperCase()}`,null);
   const porSem=SEMANAS.map(sm=>acumuladoSemana(sm.n));
   const vir=estado.vendas.virados||{};
   const somaVir=n=>MODELOS.reduce((a,m)=>a+((vir[n]||{})[m]||0),0);
@@ -4235,7 +4240,7 @@ function slideDetalheSemana(ctx,W,H){
   const n=parseInt(document.getElementById('sel-semana').value,10)||1;
   const sm=SEMANAS.find(x=>x.n===n)||SEMANAS[0];
   const periodo=sm.ini===sm.fim?curto(sm.ini):curto(sm.ini)+' a '+curto(sm.fim);
-  const area=molduraSlide(ctx,W,H,`Detalhe por Modelo – ${sm.rot} de ${mesDoPainel()}`,periodo);
+  const area=molduraSlide(ctx,W,H,`GESTORES DESTAQUES - ${sm.rot.toUpperCase()} DE ${mesDoPainel().toUpperCase()}`,periodo);
   const t=acumuladoSemana(n);
   const metaG=NOMES.reduce((a,x)=>a+(estado.config.metaTotal[x]||0),0);
   const totM=m=>NOMES.reduce((a,l)=>a+t[l][m],0);
@@ -4302,8 +4307,8 @@ const SLIDES={
   dia:{fn:slideVendasDia,titulo:'Slide · Vendas do dia',secao:'aba-relatorios'},
   acomp:{fn:slideAcompanhamento,titulo:'Slide · Acompanhamento do mês',secao:'aba-relatorios'},
   cadencia:{fn:slideCadencia,titulo:'Slide · Cadência de faturamento',secao:'aba-relatorios'},
-  semanal:{fn:slideSemanal,titulo:'Slide · Vendas por semana',secao:'aba-semanal'},
-  detalhe:{fn:slideDetalheSemana,titulo:'Slide · Detalhe por modelo',secao:'aba-semanal'},
+  semanal:{fn:slideSemanal,titulo:'Slide · Comparativo vendas semanal',secao:'aba-semanal'},
+  detalhe:{fn:slideDetalheSemana,titulo:'Slide · Gestores destaques',secao:'aba-semanal'},
   indicadores:{fn:slideIndicadores,titulo:'Slide · Indicadores VN',secao:'aba-indicadores'}
 };
 /* O canvas era fixo em 1920×1080, o que faz o e-mail inserir a imagem
@@ -5351,14 +5356,14 @@ const classeMax = (v,alvo) => v === null || v === undefined ? 'dim' : (v <= alvo
 
 // cada indicador: rótulo, formato e cor — usado na tela e no slide
 const IND = [
-  {campo:'vocMes',  rot:'VOC Index mês',         fmt:fPct, cor:v => classeMin(v,OBJ.vocMes),  forte:1},
-  {campo:'voc3m',   rot:'VOC Index 3M',          fmt:fPct, cor:v => classeMin(v,OBJ.voc3m)},
-  {campo:'retorno', rot:'Retorno mês',           fmt:fPct, cor:v => classeMax(v,OBJ.retorno), forte:1},
-  {campo:'pesq',    rot:'Pesquisas respondidas', fmt:fInt, cor:() => ''},
-  {campo:'eleg',    rot:'Clientes elegíveis',    fmt:fInt, cor:() => 'dim'},
-  {campo:'erep',    rot:'Índice e-Reputation',   fmt:f1,   cor:() => ''},
-  {campo:'gmb',     rot:'Nota estrela GMB',      fmt:f2,   cor:v => classeMin(v,OBJ.gmb)},
-  {campo:'resp',    rot:'Taxa de resposta GMB',  fmt:fPct, cor:v => classeMin(v,OBJ.resp)}
+  {campo:'vocMes',  rot:'VOC Index mês',         fmt:fPct, cor:v => classeMin(v,OBJ.vocMes),  alvo:'≥ ' + OBJ.vocMes + '%',  forte:1},
+  {campo:'voc3m',   rot:'VOC Index 3M',          fmt:fPct, cor:v => classeMin(v,OBJ.voc3m),   alvo:'≥ ' + OBJ.voc3m + '%'},
+  {campo:'retorno', rot:'Retorno mês',           fmt:fPct, cor:v => classeMax(v,OBJ.retorno), alvo:'≤ ' + OBJ.retorno + '%', forte:1},
+  {campo:'pesq',    rot:'Pesquisas respondidas', fmt:fInt, cor:() => '',                      alvo:'—'},
+  {campo:'eleg',    rot:'Clientes elegíveis',    fmt:fInt, cor:() => 'dim',                   alvo:'—'},
+  {campo:'erep',    rot:'Índice e-Reputation',   fmt:f1,   cor:() => '',                      alvo:'—'},
+  {campo:'gmb',     rot:'Nota estrela GMB',      fmt:f2,   cor:v => classeMin(v,OBJ.gmb),     alvo:'≥ ' + f1(OBJ.gmb)},
+  {campo:'resp',    rot:'Taxa de resposta GMB',  fmt:fPct, cor:v => classeMin(v,OBJ.resp),    alvo:OBJ.resp + '%'}
 ];
 
 // ── seletor de mês ───────────────────────────────────────────────────────────
@@ -5394,24 +5399,12 @@ function desenharKpis(){
   ].join('');
 }
 
-// ── tabela da tela (loja por linha, padrão dos outros painéis) ───────────────
-const COLS = [
-  {k:'loja',    t:'Loja'},
-  {k:'vocMes',  t:'VOC mês',      n:1},
-  {k:'voc3m',   t:'VOC 3M',       n:1},
-  {k:'retorno', t:'Retorno',      n:1},
-  {k:'pesq',    t:'Pesquisas',    n:1},
-  {k:'eleg',    t:'Elegíveis',    n:1},
-  {k:'erep',    t:'e-Reputation', n:1},
-  {k:'gmb',     t:'GMB',          n:1},
-  {k:'resp',    t:'Taxa resp.',   n:1}
-];
+// ── tabela da tela: mesmo formato da planilha e do slide ────────────────────
+// (indicador por linha, loja por coluna)
 
 function ordenar(lista){
   const pos = l => { const i = ORDEM.indexOf(l); return i === -1 ? 99 : i; };
   if(ordemCampo === 'padrao') return lista.slice().sort((a,b) => pos(a.loja) - pos(b.loja));
-  if(ordemCampo === 'loja') return lista.slice().sort((a,b) =>
-    ordemDir === 'asc' ? a.loja.localeCompare(b.loja) : b.loja.localeCompare(a.loja));
   return lista.slice().sort((a,b) => {
     const x = (a[ordemCampo] === null || a[ordemCampo] === undefined) ? -Infinity : a[ordemCampo];
     const y = (b[ordemCampo] === null || b[ordemCampo] === undefined) ? -Infinity : b[ordemCampo];
@@ -5427,43 +5420,34 @@ function desenharTabela(){
       + 'Sem dados ainda — confira o link da planilha no fim da página e clique em Buscar agora.</td></tr>';
     return;
   }
-  const linhas = ordenar(dados);
+  const lojas = ordenar(dados);
   const T = totais(dados);
   const seta = k => ordemCampo === k ? (ordemDir === 'asc' ? ' ↑' : ' ↓') : '';
-  const cab = '<tr>' + COLS.map(c =>
-    `<th class="sortable ${c.n?'r':''} ${ordemCampo===c.k?'active':''}" data-k="${c.k}">${c.t}${seta(c.k)}</th>`).join('') + '</tr>';
 
-  const meta = `<tr class="meta-row"><td>OBJETIVO</td>`
-    + `<td class="r">≥ ${OBJ.vocMes}%</td><td class="r">≥ ${OBJ.voc3m}%</td><td class="r">≤ ${OBJ.retorno}%</td>`
-    + `<td class="r dim">—</td><td class="r dim">—</td><td class="r dim">—</td>`
-    + `<td class="r">≥ ${f1(OBJ.gmb)}</td><td class="r">${OBJ.resp}%</td></tr>`;
+  const cab = '<tr><th>Indicador</th><th class="c">Objetivo</th>'
+    + lojas.map(r => `<th class="r">${ROTULO[r.loja] || r.loja}</th>`).join('')
+    + '<th class="r active">EUROVIA</th></tr>';
 
-  const corpo = linhas.map(r => `<tr>`
-    + `<td>${ROTULO[r.loja] || r.loja}</td>`
-    + `<td class="r ${classeMin(r.vocMes,OBJ.vocMes)}">${fPct(r.vocMes)}</td>`
-    + `<td class="r ${classeMin(r.voc3m,OBJ.voc3m)}">${fPct(r.voc3m)}</td>`
-    + `<td class="r ${classeMax(r.retorno,OBJ.retorno)}">${fPct(r.retorno)}</td>`
-    + `<td class="r">${fInt(r.pesq)}</td>`
-    + `<td class="r dim">${fInt(r.eleg)}</td>`
-    + `<td class="r">${f1(r.erep)}</td>`
-    + `<td class="r ${classeMin(r.gmb,OBJ.gmb)}">${f2(r.gmb)}</td>`
-    + `<td class="r ${classeMin(r.resp,OBJ.resp)}">${fPct(r.resp)}</td>`
-    + `</tr>`).join('');
+  const corpo = IND.map(ind => {
+    const cels = lojas.map(r => {
+      const v = r[ind.campo];
+      return `<td class="r ${ind.cor(v)}">${ind.fmt(v)}</td>`;
+    }).join('');
+    const vt = T[ind.campo];
+    return `<tr>`
+      + `<td class="ind-rot ${ordemCampo === ind.campo ? 'active' : ''}" data-k="${ind.campo}"`
+      + ` title="Ordenar as lojas por ${ind.rot}">${ind.rot}${seta(ind.campo)}</td>`
+      + `<td class="c dim">${ind.alvo}</td>`
+      + cels
+      + `<td class="r col-grupo">${ind.fmt(vt)}</td></tr>`;
+  }).join('');
 
-  const tot = `<tr class="total-row"><td>EUROVIA</td>`
-    + `<td class="r ${classeMin(T.vocMes,OBJ.vocMes)}">${fPct(T.vocMes)}</td>`
-    + `<td class="r ${classeMin(T.voc3m,OBJ.voc3m)}">${fPct(T.voc3m)}</td>`
-    + `<td class="r ${classeMax(T.retorno,OBJ.retorno)}">${fPct(T.retorno)}</td>`
-    + `<td class="r">${fInt(T.pesq)}</td><td class="r">${fInt(T.eleg)}</td>`
-    + `<td class="r">${f1(T.erep)}</td>`
-    + `<td class="r ${classeMin(T.gmb,OBJ.gmb)}">${f2(T.gmb)}</td>`
-    + `<td class="r ${classeMin(T.resp,OBJ.resp)}">${fPct(T.resp)}</td></tr>`;
+  t.innerHTML = cab + corpo;
 
-  t.innerHTML = cab + meta + corpo + tot;
-  t.querySelectorAll('th[data-k]').forEach(th => th.onclick = () => {
-    const k = th.dataset.k;
+  t.querySelectorAll('td[data-k]').forEach(td => td.onclick = () => {
+    const k = td.dataset.k;
     if(ordemCampo === k) ordemDir = ordemDir === 'asc' ? 'desc' : 'asc';
-    else { ordemCampo = k; ordemDir = (k === 'loja') ? 'asc' : 'desc'; }
+    else { ordemCampo = k; ordemDir = 'desc'; }
     desenharTabela(); desenharVoz();
     if(document.getElementById('qualSlideOverlay').classList.contains('on')) qualDesenharSlide();
   });
@@ -5811,6 +5795,13 @@ function resumoEstoque(){
            alertas:0, pracas:0, em:CONFIG.atualizadoEm, origem:'config' };
 }
 
+/* quantos dias o estoque aguenta na média de vendas dos últimos 3 meses */
+function diasDeEstoque(total){
+  const media = CONFIG.estoque.vendaMedia3m;   // vendas por mês, média dos 3 últimos meses
+  if(!media || !total) return 0;
+  return Math.round(total / (media / 30));
+}
+
 /* ---- resumo de vendas: números vivos do painel de vendas > CONFIG ---- */
 /* selo de hora: "atualizado às 15:00" quando é do mesmo dia */
 function seloHora(iso){
@@ -5866,7 +5857,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v9 · 25/08';
+const VERSAO = 'v11 · 25/08';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
@@ -5907,16 +5898,17 @@ function renderHome(){
   /* descrição dinâmica do card de estoque */
   let descEstoque, metricasEstoque, barraEstoque;
   if (temDados){
-    descEstoque = `${brl(E.valor)} em estoque · ${E.alertas} veículo(s) acima de 150 dias (máx ${n(E.diasMax)}).`;
+    descEstoque = `${brl(E.valor)} em estoque · ${E.alertas} veículo(s) acima de 150 dias (máx ${n(E.diasMax)})`
+      + ` · giro pela média de ${n(CONFIG.estoque.vendaMedia3m)} vendas/mês dos últimos 3 meses.`;
     metricasEstoque = [
       {r:'Em estoque', v:n(E.total)},
       {r:'Pagos', v:n(E.pagos)},
-      {r:'Dias méd', v:n1(CONFIG.estoque.vendaMedia3m ? E.total / CONFIG.estoque.vendaMedia3m : 0)}
+      {r:'Dias de estoque', v:n(diasDeEstoque(E.total)), c:(diasDeEstoque(E.total) > 90 ? 'alerta' : '')}
     ];
     barraEstoque = {esq:'Veículos pagos', dir:`${n(E.pagos)} / ${n(E.total)} · ${pctPagos}%`, pct:pctPagos};
   } else {
     descEstoque = 'Nenhuma planilha carregada. Abra o painel e anexe a planilha de estoque na aba Ajustes.';
-    metricasEstoque = [{r:'Em estoque', v:'—'},{r:'Pagos', v:'—'},{r:'Dias méd', v:'—'}];
+    metricasEstoque = [{r:'Em estoque', v:'—'},{r:'Pagos', v:'—'},{r:'Dias de estoque', v:'—'}];
     barraEstoque = {esq:'Veículos pagos', dir:'aguardando planilha', pct:0};
   }
 
