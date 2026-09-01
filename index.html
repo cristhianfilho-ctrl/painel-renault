@@ -139,6 +139,20 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
 #view-home .painel.breve .desc{margin-bottom:auto}
 #view-home .painel.breve .tag-fonte{border-color:var(--amarelo);color:var(--amarelo)}
 
+/* caixa do texto de e-mail das vendas diárias */
+#view-vendas .caixa-email{margin-top:16px;padding:14px;border:1px solid #2a2f36;background:#15181c}
+#view-vendas .topo-email{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+#view-vendas .rot-email{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;text-transform:uppercase;
+  letter-spacing:.14em;font-size:11.5px;color:#ffce00;
+}
+#view-vendas #texto-email{
+  width:100%;min-height:320px;resize:vertical;padding:14px;border-radius:0;
+  background:#0f1114;color:#e8e9ea;border:1px solid #2a2f36;
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.65;white-space:pre;
+}
+#view-vendas #texto-email:focus{outline:none;border-color:#ffce00}
+
 /* seletor de mês do painel de vendas */
 #view-vendas .mes-vendas{display:inline-flex;align-items:center;gap:7px}
 #view-vendas .mes-vendas label{
@@ -902,7 +916,6 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
         <div class="sub" id="subtitulo"></div>
       </div>
     </div>
-    <div class="selo" id="selo"></div>
   </header>
 
   <div class="regua anima" style="animation-delay:.05s"></div>
@@ -1267,6 +1280,7 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
       <h2>Vendas diárias
         <span class="controles">
           <button class="acao miudo" id="btn-todos-dias">Ver todos os dias do mês</button>
+          <button class="acao miudo" id="btn-email-dia">E-mail</button>
           <button class="acao miudo destaque-btn" data-slide="dia">Slide</button>
         </span>
       </h2>
@@ -1274,6 +1288,18 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
         <div class="lista-dias" id="chips-dias"></div>
         <p class="dica">Selecione dois dias para somar — útil na reunião de segunda, juntando sexta e sábado. O slide acompanha o título.</p>
         <div id="detalhe-dia"></div>
+
+        <div class="caixa-email" id="caixa-email" hidden>
+          <div class="topo-email">
+            <span class="rot-email">Texto do e-mail</span>
+            <span class="controles">
+              <button class="acao miudo destaque-btn" id="btn-copiar-email">Copiar texto</button>
+              <button class="acao miudo" id="btn-fechar-email">Fechar</button>
+            </span>
+          </div>
+          <textarea id="texto-email" readonly spellcheck="false"></textarea>
+          <p class="dica" id="recado-email">Confira os dias selecionados acima antes de copiar.</p>
+        </div>
       </div>
     </div>
 
@@ -1316,6 +1342,10 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
   </section>
 
   <section class="painel" id="aba-fechamento" hidden>
+    <p class="dica" id="aviso-fechado" hidden style="margin:0 0 14px;">
+      <b>Mês fechado.</b> Os números de agosto ficam guardados só para consulta —
+      lançamento, relatórios e vendas semanal não aparecem mais neste mês.
+    </p>
     <div class="bloco">
       <h2>Fechamento do mês
         <span class="controles">
@@ -1422,7 +1452,7 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
     <button class="btn-voltar" onclick="irParaHome()" title="Voltar para a Central">&larr; Central</button>
     <h1>PAINEL DE <span class="hl">QUALIDADE</span></h1>
   </div>
-  <div class="selo">AGOSTO 2026 · RENAULT</div>
+  <div class="selo" id="qualSelo">RENAULT</div>
 </div>
 <hr class="rule">
 
@@ -3530,8 +3560,17 @@ function semanasDoMes(ym){
   return blocos.map((b,i)=>({n:i+1,rot:(i+1)+'ª sem',
     ini:ano+'-'+p(mes)+'-'+p(b[0]), fim:ano+'-'+p(mes)+'-'+p(b[1])}));
 }
+/* Meses que já vêm no arquivo: aparecem em qualquer dispositivo, sem cadastro. */
+const MESES_FIXOS=['2026-08','2026-09'];
+/* Mês fechado: só leitura, com Fechamento e Ajustes. */
+const MESES_FECHADOS={'2026-08':true};
+/* Retrato do fechamento de agosto, para o mês aparecer pronto em máquina nova.
+   Só é usado quando não há nada gravado no navegador para agosto. */
+const RETRATO={'2026-08':{"versao":2,"gerado":"2026-09-01T16:46:45.804Z","mes":"2026-08","config":{"diasUteis":1,"metaTotal":{"IMBIRIBEIRA":54,"PIEDADE":30,"AFOGADOS":43,"OLINDA":26,"CABEDELO":32,"EPITÁCIO":58,"IGUATEMI":55,"LAURO":33},"metaModelo":{"IMBIRIBEIRA":{"BOREAL":6,"KARDIAN":8,"DUSTER":5},"PIEDADE":{"BOREAL":3,"KARDIAN":4,"DUSTER":2},"AFOGADOS":{"BOREAL":6,"KARDIAN":7,"DUSTER":4},"OLINDA":{"BOREAL":2,"KARDIAN":3,"DUSTER":2},"CABEDELO":{"BOREAL":4,"KARDIAN":9,"DUSTER":6},"EPITÁCIO":{"BOREAL":7,"KARDIAN":6,"DUSTER":4},"IGUATEMI":{"BOREAL":7,"KARDIAN":9,"DUSTER":6},"LAURO":{"BOREAL":5,"KARDIAN":6,"DUSTER":4}}},"rvd":{"margem":{"IMBIRIBEIRA":0,"PIEDADE":0,"AFOGADOS":197,"OLINDA":2919,"CABEDELO":0,"EPITÁCIO":3838,"IGUATEMI":14480,"LAURO":1658},"faturados":{"IMBIRIBEIRA":1,"PIEDADE":0,"AFOGADOS":2,"OLINDA":1,"CABEDELO":2,"EPITÁCIO":2,"IGUATEMI":4,"LAURO":4}},"vendas":{"dias":{"2026-08-01":{"IMBIRIBEIRA":{"BOREAL":1},"PIEDADE":{"KARDIAN":1},"AFOGADOS":{"DUSTER":1,"KWID":1},"OLINDA":{"DUSTER":1},"EPITÁCIO":{"KARDIAN":1},"IGUATEMI":{"BOREAL":1,"KARDIAN":1,"KWID":2},"LAURO":{"OROCH":1}},"2026-08-03":{"IMBIRIBEIRA":{"DUSTER":1,"KWID":1},"PIEDADE":{"DUSTER":1},"AFOGADOS":{"OROCH":1,"KWID":1},"OLINDA":{"DUSTER":1},"CABEDELO":{"KWID":1},"EPITÁCIO":{"KWID":2},"IGUATEMI":{"OROCH":1},"LAURO":{"KARDIAN":1}},"2026-08-04":{"PIEDADE":{"KWID":1},"AFOGADOS":{"OROCH":1},"OLINDA":{"KARDIAN":1},"EPITÁCIO":{"DUSTER":1},"IGUATEMI":{"OROCH":1},"LAURO":{"DUSTER":1}},"2026-08-05":{"IMBIRIBEIRA":{"KWID":1},"PIEDADE":{"KWID":1},"AFOGADOS":{"KARDIAN":1,"KWID":1},"OLINDA":{"KWID":1},"CABEDELO":{"KARDIAN":1},"EPITÁCIO":{"KWID":1},"IGUATEMI":{"BOREAL":2,"KWID":1},"LAURO":{"OROCH":1}},"2026-08-06":{"IMBIRIBEIRA":{"KWID":1},"PIEDADE":{"KWID":1},"AFOGADOS":{"DUSTER":1,"OROCH":1},"OLINDA":{"KWID":1},"CABEDELO":{"KWID":1},"EPITÁCIO":{"KARDIAN":1,"OROCH":1},"IGUATEMI":{"KWID":1},"LAURO":{"KARDIAN":1,"KWID":1}},"2026-08-07":{"IMBIRIBEIRA":{"KARDIAN":1,"DUSTER":1},"PIEDADE":{"BOREAL":1},"AFOGADOS":{"KWID":2},"OLINDA":{"DUSTER":1,"KWID":1},"CABEDELO":{"DUSTER":1},"EPITÁCIO":{"BOREAL":1}},"2026-08-08":{"IMBIRIBEIRA":{"BOREAL":1,"KARDIAN":1,"DUSTER":1,"KOLEOS":1,"OROCH":1},"PIEDADE":{"KARDIAN":1},"AFOGADOS":{"KARDIAN":1,"DUSTER":1,"KWID":2},"OLINDA":{"DUSTER":1},"CABEDELO":{"DUSTER":1},"EPITÁCIO":{"BOREAL":1},"IGUATEMI":{"BOREAL":2,"KWID":2},"LAURO":{"OROCH":1}},"2026-08-11":{"IMBIRIBEIRA":{"KWID":1},"PIEDADE":{"KWID":1},"AFOGADOS":{"DUSTER":1},"OLINDA":{"KWID":1},"CABEDELO":{"KARDIAN":1},"EPITÁCIO":{"KARDIAN":1},"IGUATEMI":{"DUSTER":1}},"2026-08-12":{"IMBIRIBEIRA":{"KARDIAN":1,"KWID":1},"AFOGADOS":{"KWID":1},"OLINDA":{"KWID":1},"CABEDELO":{"KWID":1},"EPITÁCIO":{"KARDIAN":1,"KWID":1},"IGUATEMI":{"DUSTER":2},"LAURO":{"KWID":1}},"2026-08-13":{"IMBIRIBEIRA":{"OROCH":1,"KWID":2},"AFOGADOS":{"KWID":1},"CABEDELO":{"OROCH":1},"EPITÁCIO":{"BOREAL":1},"IGUATEMI":{"DUSTER":1},"LAURO":{"OROCH":1}},"2026-08-15":{"IMBIRIBEIRA":{"BOREAL":1,"KARDIAN":2,"KWID":2},"PIEDADE":{"KARDIAN":1,"OROCH":1,"KWID":1},"AFOGADOS":{"KARDIAN":1},"CABEDELO":{"KARDIAN":1},"EPITÁCIO":{"BOREAL":1,"KARDIAN":1,"DUSTER":1,"KWID":1},"IGUATEMI":{"KARDIAN":2},"LAURO":{"BOREAL":1,"KARDIAN":2}},"2026-08-14":{"IMBIRIBEIRA":{"BOREAL":1,"KARDIAN":1,"KWID":1},"PIEDADE":{"BOREAL":1,"DUSTER":1},"AFOGADOS":{"DUSTER":1,"KWID":1},"OLINDA":{"DUSTER":1,"KWID":1},"CABEDELO":{"KWID":1},"EPITÁCIO":{"DUSTER":1,"KWID":3},"IGUATEMI":{"OROCH":1},"LAURO":{"KWID":1}},"2026-08-17":{"OLINDA":{"OROCH":1,"KWID":1},"CABEDELO":{"KARDIAN":1},"EPITÁCIO":{"BOREAL":1,"KWID":2},"IGUATEMI":{"KARDIAN":1},"LAURO":{"KWID":1}},"2026-08-18":{"PIEDADE":{"DUSTER":1},"AFOGADOS":{"KARDIAN":1,"KWID":1},"OLINDA":{"DUSTER":1},"CABEDELO":{"KARDIAN":1,"DUSTER":1},"EPITÁCIO":{"KWID":2},"IGUATEMI":{"KARDIAN":1},"LAURO":{"KARDIAN":2}},"2026-08-19":{"IMBIRIBEIRA":{"KWID":4},"AFOGADOS":{"KARDIAN":1,"KWID":1},"EPITÁCIO":{"BOREAL":1},"LAURO":{"KWID":1}},"2026-08-20":{"IMBIRIBEIRA":{"KARDIAN":3,"DUSTER":1},"AFOGADOS":{"BOREAL":1},"CABEDELO":{"KWID":1}},"2026-08-21":{"IMBIRIBEIRA":{"DUSTER":1},"PIEDADE":{"KWID":2},"AFOGADOS":{"KWID":1},"OLINDA":{"KWID":1},"EPITÁCIO":{"DUSTER":2},"LAURO":{"DUSTER":1}},"2026-08-22":{"IMBIRIBEIRA":{"BOREAL":1,"KARDIAN":1,"DUSTER":3,"OROCH":1},"PIEDADE":{"DUSTER":1,"KWID":1},"AFOGADOS":{"KARDIAN":1,"DUSTER":1,"OROCH":1,"KWID":3},"OLINDA":{"DUSTER":1},"EPITÁCIO":{"BOREAL":1},"IGUATEMI":{"KARDIAN":2,"DUSTER":1,"KWID":1},"LAURO":{"KARDIAN":1,"KWID":2}},"2026-08-10":{"PIEDADE":{"DUSTER":1,"OROCH":1},"AFOGADOS":{"KARDIAN":1},"EPITÁCIO":{"KWID":1},"IGUATEMI":{"KWID":1}},"2026-08-24":{"AFOGADOS":{"DUSTER":1},"OLINDA":{"DUSTER":1}},"2026-08-25":{"IMBIRIBEIRA":{"BOREAL":1},"PIEDADE":{"KWID":1},"EPITÁCIO":{"KARDIAN":1},"IGUATEMI":{"KARDIAN":2},"LAURO":{"KWID":1}},"2026-08-26":{"IMBIRIBEIRA":{"KWID":1},"PIEDADE":{"KWID":1},"OLINDA":{"KWID":1},"CABEDELO":{"KWID":1},"EPITÁCIO":{"KARDIAN":1,"KWID":1},"IGUATEMI":{"KWID":1},"LAURO":{"DUSTER":1}},"2026-08-27":{"IMBIRIBEIRA":{"KWID":3},"AFOGADOS":{"KARDIAN":1},"IGUATEMI":{"DUSTER":1,"KWID":1},"LAURO":{"OROCH":1,"KWID":1}},"2026-08-28":{"IMBIRIBEIRA":{"KARDIAN":1,"OROCH":1,"KWID":2},"PIEDADE":{"KWID":1},"AFOGADOS":{"DUSTER":1,"KWID":1},"OLINDA":{"KWID":1},"CABEDELO":{"KWID":1},"EPITÁCIO":{"KARDIAN":1,"KWID":1},"IGUATEMI":{"KARDIAN":1,"KWID":1},"LAURO":{"KWID":1}},"2026-08-29":{"IMBIRIBEIRA":{"KARDIAN":3,"DUSTER":2,"KWID":3},"PIEDADE":{"KWID":1},"AFOGADOS":{"KARDIAN":3},"OLINDA":{"KWID":2},"CABEDELO":{"KWID":1},"EPITÁCIO":{"KARDIAN":1},"LAURO":{"DUSTER":1,"KWID":2}}},"virados":{"AFOGADOS":{"DUSTER":2,"KWID":1},"CABEDELO":{"DUSTER":1,"OROCH":1,"KWID":3},"EPITÁCIO":{"KWID":1}}},"indicadores":{"porLoja":{"AFOGADOS":{"linhas":47,"faturados":45,"vendas":46,"dev":1,"refat":0,"devSoma":-1,"marSoma":102102.61,"empSoma":26,"empN":44,"capSoma":32,"brancos":3,"modelos":{"BOREAL":2,"KARDIAN":9,"DUSTER":10,"KOLEOS":0,"OROCH":0,"KWID":24,"S/ MODELO":0}},"CABEDELO":{"linhas":22,"faturados":22,"vendas":22,"dev":0,"refat":0,"devSoma":0,"marSoma":53450.56999999999,"empSoma":22,"empN":22,"capSoma":12,"brancos":0,"modelos":{"BOREAL":0,"KARDIAN":7,"DUSTER":4,"KOLEOS":0,"OROCH":2,"KWID":9,"S/ MODELO":0}},"EPITÁCIO":{"linhas":40,"faturados":40,"vendas":40,"dev":0,"refat":0,"devSoma":-1,"marSoma":111841.12999999999,"empSoma":34,"empN":40,"capSoma":22,"brancos":0,"modelos":{"BOREAL":6,"KARDIAN":11,"DUSTER":5,"KOLEOS":0,"OROCH":1,"KWID":17,"S/ MODELO":0}},"IGUATEMI":{"linhas":34,"faturados":32,"vendas":33,"dev":1,"refat":0,"devSoma":-1,"marSoma":114262.31999999996,"empSoma":32,"empN":33,"capSoma":28,"brancos":1,"modelos":{"BOREAL":6,"KARDIAN":10,"DUSTER":5,"KOLEOS":0,"OROCH":0,"KWID":11,"S/ MODELO":0}},"IMBIRIBEIRA":{"linhas":58,"faturados":55,"vendas":55,"dev":0,"refat":3,"devSoma":-3,"marSoma":402775.9199999999,"empSoma":36,"empN":55,"capSoma":30,"brancos":3,"modelos":{"BOREAL":5,"KARDIAN":10,"DUSTER":7,"KOLEOS":1,"OROCH":2,"KWID":22,"S/ MODELO":8}},"LAURO":{"linhas":23,"faturados":23,"vendas":23,"dev":0,"refat":0,"devSoma":0,"marSoma":8404.510000000006,"empSoma":12,"empN":22,"capSoma":9,"brancos":1,"modelos":{"BOREAL":0,"KARDIAN":6,"DUSTER":1,"KOLEOS":0,"OROCH":2,"KWID":14,"S/ MODELO":0}},"OLINDA":{"linhas":26,"faturados":26,"vendas":26,"dev":0,"refat":0,"devSoma":0,"marSoma":56065.990000000005,"empSoma":22,"empN":26,"capSoma":11,"brancos":0,"modelos":{"BOREAL":1,"KARDIAN":2,"DUSTER":7,"KOLEOS":0,"OROCH":1,"KWID":15,"S/ MODELO":0}},"PIEDADE":{"linhas":21,"faturados":21,"vendas":21,"dev":0,"refat":0,"devSoma":0,"marSoma":43998.990000000005,"empSoma":16,"empN":21,"capSoma":10,"brancos":0,"modelos":{"BOREAL":2,"KARDIAN":4,"DUSTER":4,"KOLEOS":0,"OROCH":0,"KWID":11,"S/ MODELO":0}}},"linhas":271,"faturados":264,"semTotal":0,"desconhecidas":[],"arquivo":"data (2).xlsx","quando":"2026-09-01T10:22:32.533Z"},"vdi":[{"chassi":"93Y9SR8G6VJ537371","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":-464.14,"emplac":1,"capt":0,"margemEditada":180,"destino":"IGUATEMI"},{"chassi":"93Y9SR8G6VJ537325","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":-1132.39,"emplac":1,"capt":0,"margemEditada":-1132,"destino":"LAURO"},{"chassi":"93Y9SR8G6VJ537334","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":1067.6,"emplac":1,"capt":0,"margemEditada":1068,"destino":"LAURO"},{"chassi":"93Y9SR8G6VJ551098","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":1723.6,"emplac":1,"capt":0,"margemEditada":1724,"destino":"LAURO"},{"chassi":"93Y9SR8G6VJ595775","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":11904.81,"emplac":1,"capt":0,"margemEditada":12543,"destino":"IMBIRIBEIRA"},{"chassi":"93Y9SR8G6VJ595784","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":2540.85,"emplac":0,"capt":0,"margemEditada":3185,"destino":"AFOGADOS"},{"chassi":"93Y9SR8G6VJ595888","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / OROCH ICONIC 16 MT","total":1,"margem":11209.22,"emplac":0,"capt":0,"margemEditada":11884,"destino":"AFOGADOS"},{"chassi":"93Y9SR8G6VJ597737","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / OROCH ICONIC 16 MT","total":1,"margem":6879.54,"emplac":1,"capt":1,"margemEditada":7548,"destino":"AFOGADOS"},{"chassi":"93Y9SR8G6VJ624659","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":3345.83,"emplac":0,"capt":1,"margemEditada":3990,"destino":"PIEDADE"},{"chassi":"93Y9SR8G6VJ537374","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":897.49,"emplac":1,"capt":0,"margemEditada":1542,"destino":"IGUATEMI"},{"chassi":"93Y9SR8G6VJ551145","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":2995.85,"emplac":0,"capt":1,"margemEditada":3640,"destino":"IGUATEMI"},{"chassi":"93Y9SR8G6VJ596880","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":1607.21,"emplac":1,"capt":0,"margemEditada":2246,"destino":"LAURO"},{"chassi":"93YHJD209VJ709483","matriz":"IGUATEMI","familia":"DUSTER (79M)","modelo":"RENAULT / DUSTER ICOUT TCE","total":1,"margem":3569.57,"emplac":1,"capt":1,"margemEditada":4375,"destino":"IGUATEMI"},{"chassi":"93Y9SR8G6VJ537369","matriz":"IGUATEMI","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":1455.85,"emplac":1,"capt":1,"margemEditada":2100,"destino":"LAURO"},{"chassi":"93Y9SR8G6VJ559542","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":1050.85,"emplac":1,"capt":0,"margemEditada":null,"destino":null},{"chassi":"93Y9SR8G6VJ559807","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":-545.67,"emplac":1,"capt":1,"margemEditada":null,"destino":null},{"chassi":"93Y9SR8G6VJ595750","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / DUSTER OROCH INTENSE 16 M","total":1,"margem":46.79,"emplac":1,"capt":1,"margemEditada":685,"destino":"PIEDADE"},{"chassi":"93Y9SR8G6VJ624897","matriz":"PIEDADE","familia":"OROCH (M79)","modelo":"RENAULT / OROCH ICONIC 16 MT","total":1,"margem":5489.4,"emplac":1,"capt":1,"margemEditada":6164,"destino":"OLINDA"},{"chassi":"93YHJD200VJ709372","matriz":"IGUATEMI","familia":"DUSTER (79M)","modelo":"RENAULT / DUSTER ICOUT TCE","total":1,"margem":-900.75,"emplac":1,"capt":1,"margemEditada":null,"destino":null}]}};
+
 let mesVendas=MES_BASE;
 let SEMANAS=semanasDoMes(MES_BASE);
+const mesFechado=ym=>!!MESES_FECHADOS[ym];
 const semanaDe = d => SEMANAS.find(s=>d>=s.ini&&d<=s.fim) || null;
 const curto = d => { const p=String(d||'').split('-'); return p.length<3?(d||'—'):p[2]+'/'+p[1]; };
 
@@ -3609,7 +3648,7 @@ let baseViva=false;
 const PREFIXO='eurovia:v1:';
 const chaveDoMes=ym=>ym===MES_BASE?PREFIXO:PREFIXO+ym+':';
 let CHAVE=chaveDoMes(MES_BASE);
-let mesesConhecidos=[MES_BASE];
+let mesesConhecidos=MESES_FIXOS.slice();
 /* ajustes que valem para todos os meses */
 const GLOBAIS=['drive','meses','mes'];
 
@@ -3673,6 +3712,18 @@ async function salvarTudo(quieto){
 async function carregarTudo(){
   const c=await buscar('config'),r=await buscar('rvd'),v=await buscar('vendas'),h=await buscar('historico'),i=await buscar('indicadores'),vd=await buscar('vdi');
   if(c)estado.config=c; if(r)estado.rvd=r; if(v)estado.vendas=v; if(Array.isArray(h))historico=h; if(i)estado.indicadores=i; if(Array.isArray(vd))estado.vdi=vd;
+  /* Cada pedaço que não está gravado vem do retrato do mês, se existir, ou
+     zerado. Sem isso o mês novo herdaria os números de agosto que vêm no
+     PADRAO do arquivo. */
+  const rt = RETRATO[mesVendas] ? JSON.parse(JSON.stringify(RETRATO[mesVendas])) : null;
+  if(!c && rt && rt.config) estado.config=rt.config;
+  if(!v) estado.vendas = (rt && rt.vendas) ? rt.vendas : {dias:{},virados:{}};
+  if(!r) estado.rvd = (rt && rt.rvd) ? rt.rvd : {margem:zerosLoja(),faturados:zerosLoja()};
+  if(!i) estado.indicadores = (rt && rt.indicadores) ? rt.indicadores : {};
+  if(!vd) estado.vdi = (rt && Array.isArray(rt.vdi)) ? rt.vdi : [];
+  if(!Array.isArray(h)) historico=[];
+  if(!v && rt && rt.gerado) atualizadoEm=rt.gerado;
+
   const d=await buscar('drive'); if(d&&typeof d==='object') drive={...DRIVE_PADRAO,...d};
   if(!drive.url && DRIVE_PADRAO.url) drive.url=DRIVE_PADRAO.url;
   const f=await buscar('fonte'); if(f&&typeof f==='object') fonteAtual=f;
@@ -3697,16 +3748,65 @@ const rotuloMes=ym=>{
   const [a,m]=ym.split('-').map(Number);
   return MESES[m-1]+' '+a;
 };
+const rotuloComEstado=ym=>rotuloMes(ym)+(mesFechado(ym)?' · Fechada':'');
+/* mês para abrir: o corrente se estiver aberto, senão o último mês aberto */
+function mesPadrao(){
+  const lista=mesesConhecidos.slice().sort();
+  const h=new Date(), p=n=>String(n).padStart(2,'0');
+  const agora=h.getFullYear()+'-'+p(h.getMonth()+1);
+  if(lista.indexOf(agora)>=0 && !mesFechado(agora)) return agora;
+  const abertos=lista.filter(m=>!mesFechado(m));
+  return abertos.length?abertos[abertos.length-1]:lista[lista.length-1];
+}
 
 function desenharSeletorMes(){
   const sel=document.getElementById('sel-mes-vendas'); if(!sel) return;
   const lista=mesesConhecidos.slice().sort();
   const novo=proximoMes(lista[lista.length-1]);
-  const opcoes=lista.map(m=>`<option value="${m}"${m===mesVendas?' selected':''}>${rotuloMes(m)}</option>`);
+  const opcoes=lista.map(m=>`<option value="${m}"${m===mesVendas?' selected':''}>${rotuloComEstado(m)}</option>`);
   if(lista.indexOf(novo)<0) opcoes.push(`<option value="${novo}">+ ${rotuloMes(novo)}</option>`);
   sel.innerHTML=opcoes.join('');
   const car=document.getElementById('carimbo-mes');
-  if(car) car.textContent=rotuloMes(mesVendas)+' · Renault';
+  if(car) car.textContent=(mesFechado(mesVendas)?rotuloMes(mesVendas)+' · Fechada':rotuloMes(mesVendas)+' · Renault');
+  aplicarModoFechado();
+}
+
+/* Mês fechado é só consulta: ficam a aba Fechamento — com os Indicadores VN
+   dentro dela — e a de Ajustes. As outras somem, porque não há mais o que
+   lançar. */
+let blocoIndOriginal=null;
+function aplicarModoFechado(){
+  const fechado=mesFechado(mesVendas);
+  const abas=document.querySelectorAll('#view-vendas nav button[data-aba]');
+  const visiveis=['fechamento','ajustes'];
+  abas.forEach(b=>{
+    const some = fechado && visiveis.indexOf(b.dataset.aba)<0;
+    b.hidden=some;
+    if(some) b.setAttribute('aria-selected','false');
+  });
+
+  /* leva (ou devolve) o conteúdo dos Indicadores VN */
+  const secInd=document.getElementById('aba-indicadores');
+  const secFech=document.getElementById('aba-fechamento');
+  if(!secInd||!secFech) return;
+  if(!blocoIndOriginal) blocoIndOriginal=secInd.querySelector('.bloco');
+  if(!blocoIndOriginal) return;
+  if(fechado){
+    if(blocoIndOriginal.parentElement!==secFech) secFech.appendChild(blocoIndOriginal);
+  } else {
+    if(blocoIndOriginal.parentElement!==secInd) secInd.appendChild(blocoIndOriginal);
+  }
+
+  /* se a aba aberta deixou de existir, cai no Fechamento */
+  const ativa=document.querySelector('#view-vendas nav button[aria-selected="true"]');
+  if(fechado && (!ativa || visiveis.indexOf(ativa.dataset.aba)<0)){
+    const btn=document.querySelector('#view-vendas nav button[data-aba="fechamento"]');
+    if(btn) btn.click();
+  }
+
+  /* aviso de mês fechado */
+  const dica=document.getElementById('aviso-fechado');
+  if(dica) dica.hidden=!fechado;
 }
 
 /* troca o mês na tela: grava o que está aberto, carrega (ou cria) o outro */
@@ -3730,7 +3830,7 @@ async function trocarMes(ym){
     await guardar('meses',mesesConhecidos);
     await salvarTudo(true);
   }
-  await guardar('mes',ym);
+  if(!mesFechado(ym)) await guardar('mes',ym);   /* mês fechado não vira o padrão */
 
   /* a data do lançamento passa a apontar para o mês escolhido */
   const hoje=new Date(), p=n=>String(n).padStart(2,'0');
@@ -4417,6 +4517,11 @@ function desenharVendasDiarias(){
   chips.querySelectorAll('[data-dia]').forEach(b=>b.addEventListener('click',()=>{
     alternarDia(b.dataset.dia); desenharVendasDiarias();
     if(slideAtual==='dia') gerarSlide('dia');
+    const cx=document.getElementById('caixa-email');
+    if(cx && !cx.hidden){
+      if(diasSel.length) document.getElementById('texto-email').value=textoEmailDia();
+      else cx.hidden=true;
+    }
   }));
 
   const dias=diasSel.slice().sort();
@@ -4460,6 +4565,70 @@ function desenharVendasDiarias(){
     <tbody>${corpo}</tbody>
     <tfoot><tr><th>Eurovia</th>${MODELOS.map(m=>`<td>${totM(m)}</td>`).join('')}<td>${geral}</td><td>${geral}</td></tr></tfoot>
   </table></div>`;
+}
+
+/* ============ texto do e-mail das vendas diárias ============ */
+/* Monta o resumo pronto para copiar e colar, no formato usado no grupo:
+   total do dia (ou da soma dos dias), depois praça por praça com as lojas. */
+const PRACA_EMAIL=[
+  {praca:'PERNAMBUCO', rot:'Eurovia Renault Pernambuco'},
+  {praca:'PARAÍBA',    rot:'Eurovia Renault Paraíba'},
+  {praca:'BAHIA',      rot:'Eurovia Renault Bahia'}];
+const NOME_EMAIL={IMBIRIBEIRA:'Imbiribeira',PIEDADE:'Piedade',AFOGADOS:'Afogados',
+  OLINDA:'Olinda',CABEDELO:'Cabedelo','EPITÁCIO':'Epitácio',IGUATEMI:'Iguatemi',LAURO:'Lauro'};
+
+const dd2=n=>String(n).padStart(2,'0');
+const dataLonga=iso=>{ const p=String(iso).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
+const saudacao=()=>{ const h=new Date().getHours(); return h<12?'Bom dia':(h<18?'Boa tarde':'Boa noite'); };
+const palavraVenda=n=>n===1?'Venda':'Vendas';
+
+function textoEmailDia(){
+  const dias=diasSel.slice().sort();
+  if(!dias.length) return '';
+  const t=somaDias(dias);
+  const total=NOMES.reduce((a,l)=>a+somaLoja(t,l),0);
+
+  const linhas=[];
+  linhas.push(saudacao()+' !');
+  linhas.push('');
+  linhas.push('Segue abaixo o resumo das vendas realizadas no dia '
+    + dias.map(dataLonga).join(' + '));
+  linhas.push('');
+  linhas.push('No total, foram realizadas '+dd2(total)+' '+palavraVenda(total)
+    +', considerando o consolidado das três praças, sendo elas:');
+
+  PRACA_EMAIL.forEach(p=>{
+    const lojas=LOJAS.filter(l=>l.praca===p.praca);
+    const soma=lojas.reduce((a,l)=>a+somaLoja(t,l.nome),0);
+    linhas.push('');
+    linhas.push(p.rot+' – '+dd2(soma)+' '+palavraVenda(soma));
+    linhas.push('');
+    lojas.forEach(l=>linhas.push('* '+(NOME_EMAIL[l.nome]||l.nome)+': '+dd2(somaLoja(t,l.nome))));
+    linhas.push('');
+  });
+
+  return linhas.join('\n').replace(/\n+$/,'\n');
+}
+
+function abrirEmailDia(){
+  const caixa=document.getElementById('caixa-email');
+  const area=document.getElementById('texto-email');
+  if(!diasSel.length){ recado('recado-email','Selecione ao menos um dia acima.','var(--alerta)'); return; }
+  area.value=textoEmailDia();
+  caixa.hidden=false;
+  area.focus(); area.setSelectionRange(0,0);
+  caixa.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function copiarEmailDia(){
+  const area=document.getElementById('texto-email');
+  try{
+    await navigator.clipboard.writeText(area.value);
+    recado('recado-email','Texto copiado — cole no e-mail.','var(--ok)');
+  }catch(e){
+    area.select(); document.execCommand&&document.execCommand('copy');
+    recado('recado-email','Texto selecionado. Use Ctrl+C para copiar.','var(--atencao)');
+  }
 }
 
 /* ============ slides para WhatsApp ============ */
@@ -5550,6 +5719,9 @@ document.getElementById('btn-filtro-vdi').addEventListener('click',e=>{
   desenharVDI();
 });
 document.getElementById('btn-ordem-ind').addEventListener('click',()=>{ ordemInd.col=null; ordemInd.dir=-1; desenharIndicadores(); atualizarSlide(); });
+document.getElementById('btn-email-dia').addEventListener('click',abrirEmailDia);
+document.getElementById('btn-copiar-email').addEventListener('click',copiarEmailDia);
+document.getElementById('btn-fechar-email').addEventListener('click',()=>{ document.getElementById('caixa-email').hidden=true; });
 document.getElementById('btn-ordem-fech').addEventListener('click',()=>{ ordemFech={col:null,dir:-1}; desenharFechamento(); atualizarSlide(); });
 (function(){
   const area=document.getElementById('area-anexo'), inp=document.getElementById('arquivo-vn');
@@ -5792,7 +5964,8 @@ document.getElementById('btn-zerar').addEventListener('click',async()=>{
   const ms=await buscar('meses'); if(Array.isArray(ms)&&ms.length) mesesConhecidos=ms;
   if(mesesConhecidos.indexOf(MES_BASE)<0) mesesConhecidos.unshift(MES_BASE);
   const mv=await buscar('mes');
-  if(mv && mesesConhecidos.indexOf(mv)>=0){ mesVendas=mv; CHAVE=chaveDoMes(mv); SEMANAS=semanasDoMes(mv); }
+  const inicial=(mv && mesesConhecidos.indexOf(mv)>=0 && !mesFechado(mv)) ? mv : mesPadrao();
+  mesVendas=inicial; CHAVE=chaveDoMes(inicial); SEMANAS=semanasDoMes(inicial);
   desenharSeletorMes();
 
   /* a data do lançamento acompanha o dia em que o painel é aberto */
@@ -6019,6 +6192,9 @@ function desenharSeletor(){
   sel.disabled = false;
   sel.innerHTML = meses.map(m =>
     `<option value="${m.nome}"${m.nome === mesSel ? ' selected' : ''}>${m.titulo}</option>`).join('');
+  const selo = document.getElementById('qualSelo');
+  const m = meses.find(x => x.nome === mesSel);
+  if(selo) selo.textContent = (m ? m.titulo.toUpperCase() + ' · ' : '') + 'RENAULT';
 }
 function trocarMes(){
   mesSel = document.getElementById('qualMes').value;
@@ -6376,7 +6552,6 @@ const CONFIG = {
   titulo:   'CENTRAL',      // primeira palavra (branca)
   destaque: 'EUROVIA',      // segunda palavra (amarela)
   subtitulo:'Rede Renault · Pernambuco · Paraíba · Bahia',
-  periodo:  'AGOSTO 2026 · RENAULT',
 
   // caminho de cada painel (arquivo ou URL)
   links: {
@@ -6502,7 +6677,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v16 · 31/08';
+const VERSAO = 'v19 · 01/09';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
@@ -6510,7 +6685,6 @@ if (selRodape) selRodape.textContent = VERSAO;
 document.getElementById('logo').src = LOGO;
 document.getElementById('tituloSite').innerHTML = CONFIG.titulo + ' <em>' + CONFIG.destaque + '</em>';
 document.getElementById('subtitulo').textContent = CONFIG.subtitulo;
-document.getElementById('selo').textContent = CONFIG.periodo;
 document.title = CONFIG.titulo + ' ' + CONFIG.destaque + ' · Renault';
 
 /* ---- desenha KPIs + cards ---- */
