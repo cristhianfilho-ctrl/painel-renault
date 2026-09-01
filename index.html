@@ -146,12 +146,28 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
   font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;text-transform:uppercase;
   letter-spacing:.14em;font-size:11.5px;color:#ffce00;
 }
-#view-vendas #texto-email{
-  width:100%;min-height:320px;resize:vertical;padding:14px;border-radius:0;
-  background:#0f1114;color:#e8e9ea;border:1px solid #2a2f36;
-  font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.65;white-space:pre;
+#view-vendas .linha-assunto{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;
+  padding:10px 12px;background:#0f1114;border:1px solid #2a2f36;
 }
-#view-vendas #texto-email:focus{outline:none;border-color:#ffce00}
+#view-vendas .rot-assunto{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif;text-transform:uppercase;
+  letter-spacing:.14em;font-size:10.5px;color:#8b9095;
+}
+#view-vendas .valor-assunto{
+  flex:1 1 240px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:#e8e9ea;
+  user-select:all;word-break:break-word;
+}
+
+#view-vendas #previa-email{
+  width:100%;min-height:300px;max-height:60vh;overflow:auto;padding:18px 20px;border-radius:0;
+  background:#ffffff;color:#202124;border:1px solid #2a2f36;
+  font-family:arial,helvetica,sans-serif;font-size:11pt;line-height:1.45;
+}
+#view-vendas #previa-email:focus{outline:none;border-color:#ffce00}
+#view-vendas #previa-email p{margin:0 0 12px}
+#view-vendas #previa-email ul{margin:0 0 14px;padding-left:26px}
+#view-vendas #previa-email li{margin:2px 0}
 
 /* seletor de mês do painel de vendas */
 #view-vendas .mes-vendas{display:inline-flex;align-items:center;gap:7px}
@@ -1293,12 +1309,19 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
           <div class="topo-email">
             <span class="rot-email">Texto do e-mail</span>
             <span class="controles">
-              <button class="acao miudo destaque-btn" id="btn-copiar-email">Copiar texto</button>
+              <button class="acao miudo destaque-btn" id="btn-copiar-email">Copiar corpo</button>
               <button class="acao miudo" id="btn-fechar-email">Fechar</button>
             </span>
           </div>
-          <textarea id="texto-email" readonly spellcheck="false"></textarea>
-          <p class="dica" id="recado-email">Confira os dias selecionados acima antes de copiar.</p>
+
+          <div class="linha-assunto">
+            <span class="rot-assunto">Assunto</span>
+            <span class="valor-assunto" id="assunto-email"></span>
+            <button class="acao miudo" id="btn-copiar-assunto">Copiar assunto</button>
+          </div>
+          <div id="previa-email" contenteditable="true" spellcheck="false"></div>
+          <p class="dica" id="recado-email">A prévia é editável — dá para ajustar a saudação antes de copiar.
+            O botão copia com a formatação, então cola no e-mail já com negrito e marcadores.</p>
         </div>
       </div>
     </div>
@@ -4519,7 +4542,10 @@ function desenharVendasDiarias(){
     if(slideAtual==='dia') gerarSlide('dia');
     const cx=document.getElementById('caixa-email');
     if(cx && !cx.hidden){
-      if(diasSel.length) document.getElementById('texto-email').value=textoEmailDia();
+      if(diasSel.length){
+        document.getElementById('previa-email').innerHTML=htmlEmailDia();
+        document.getElementById('assunto-email').textContent=assuntoEmailDia();
+      }
       else cx.hidden=true;
     }
   }));
@@ -4579,55 +4605,101 @@ const NOME_EMAIL={IMBIRIBEIRA:'Imbiribeira',PIEDADE:'Piedade',AFOGADOS:'Afogados
 
 const dd2=n=>String(n).padStart(2,'0');
 const dataLonga=iso=>{ const p=String(iso).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
-const saudacao=()=>{ const h=new Date().getHours(); return h<12?'Bom dia':(h<18?'Boa tarde':'Boa noite'); };
+const SAUDACAO_EMAIL='Bom dia';   /* a prévia é editável, dá para trocar antes de copiar */
 const palavraVenda=n=>n===1?'Venda':'Vendas';
 
-function textoEmailDia(){
+/* O e-mail vai em HTML, para colar no Gmail já com negrito, sublinhado e
+   marcadores — igual ao que é enviado hoje. O texto puro fica como reserva
+   para quem colar em campo sem formatação. */
+function dadosEmailDia(){
   const dias=diasSel.slice().sort();
-  if(!dias.length) return '';
+  if(!dias.length) return null;
   const t=somaDias(dias);
   const total=NOMES.reduce((a,l)=>a+somaLoja(t,l),0);
-
-  const linhas=[];
-  linhas.push(saudacao()+' !');
-  linhas.push('');
-  linhas.push('Segue abaixo o resumo das vendas realizadas no dia '
-    + dias.map(dataLonga).join(' + '));
-  linhas.push('');
-  linhas.push('No total, foram realizadas '+dd2(total)+' '+palavraVenda(total)
-    +', considerando o consolidado das três praças, sendo elas:');
-
-  PRACA_EMAIL.forEach(p=>{
+  const pracas=PRACA_EMAIL.map(p=>{
     const lojas=LOJAS.filter(l=>l.praca===p.praca);
-    const soma=lojas.reduce((a,l)=>a+somaLoja(t,l.nome),0);
+    return {rot:p.rot, soma:lojas.reduce((a,l)=>a+somaLoja(t,l.nome),0),
+      lojas:lojas.map(l=>({nome:NOME_EMAIL[l.nome]||l.nome, qtd:somaLoja(t,l.nome)}))};
+  });
+  return {dias, total, pracas};
+}
+
+function assuntoEmailDia(){
+  const o=dadosEmailDia();
+  if(!o) return '';
+  return 'ACOMPANHAMENTO DIÁRIO RENAULT - ' + o.dias.map(dataLonga).join(' + ');
+}
+
+/* Sans Serif é a fonte padrão do Gmail (arial, helvetica). Vai declarada em
+   cada bloco porque o Gmail costuma descartar a div de fora ao colar. */
+const FONTE_EMAIL='font-family:arial,helvetica,sans-serif;font-size:11pt';
+
+function htmlEmailDia(){
+  const o=dadosEmailDia();
+  if(!o) return '';
+  const P='<p style="'+FONTE_EMAIL+'">';
+  const partes=[];
+  partes.push(P+SAUDACAO_EMAIL+' !</p>');
+  partes.push(P+'Segue abaixo o resumo das vendas realizadas no dia '
+    + o.dias.map(dataLonga).join(' + ') + '</p>');
+  partes.push(P+'No total, foram realizadas <b><u>' + dd2(o.total) + ' ' + palavraVenda(o.total)
+    + '</u></b>, considerando o consolidado das três praças, sendo elas:</p>');
+  partes.push(P+'<br></p>');            /* linha em branco antes das praças */
+  o.pracas.forEach(p=>{
+    partes.push(P+'<b>' + p.rot + ' - ' + dd2(p.soma) + ' ' + palavraVenda(p.soma) + '</b></p>');
+    partes.push('<ul style="'+FONTE_EMAIL+'">'
+      + p.lojas.map(l=>'<li>' + l.nome + ': ' + dd2(l.qtd) + '</li>').join('') + '</ul>');
+  });
+  return partes.join('');
+}
+
+function textoEmailDia(){
+  const o=dadosEmailDia();
+  if(!o) return '';
+  const linhas=[SAUDACAO_EMAIL+' !', '',
+    'Segue abaixo o resumo das vendas realizadas no dia ' + o.dias.map(dataLonga).join(' + '), '',
+    'No total, foram realizadas ' + dd2(o.total) + ' ' + palavraVenda(o.total)
+      + ', considerando o consolidado das três praças, sendo elas:', ''];
+  o.pracas.forEach(p=>{
     linhas.push('');
-    linhas.push(p.rot+' – '+dd2(soma)+' '+palavraVenda(soma));
+    linhas.push(p.rot + ' - ' + dd2(p.soma) + ' ' + palavraVenda(p.soma));
     linhas.push('');
-    lojas.forEach(l=>linhas.push('* '+(NOME_EMAIL[l.nome]||l.nome)+': '+dd2(somaLoja(t,l.nome))));
+    p.lojas.forEach(l=>linhas.push('* ' + l.nome + ': ' + dd2(l.qtd)));
     linhas.push('');
   });
-
   return linhas.join('\n').replace(/\n+$/,'\n');
 }
 
 function abrirEmailDia(){
   const caixa=document.getElementById('caixa-email');
-  const area=document.getElementById('texto-email');
+  const previa=document.getElementById('previa-email');
   if(!diasSel.length){ recado('recado-email','Selecione ao menos um dia acima.','var(--alerta)'); return; }
-  area.value=textoEmailDia();
+  previa.innerHTML=htmlEmailDia();
+  document.getElementById('assunto-email').textContent=assuntoEmailDia();
   caixa.hidden=false;
-  area.focus(); area.setSelectionRange(0,0);
   caixa.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 async function copiarEmailDia(){
-  const area=document.getElementById('texto-email');
+  const previa=document.getElementById('previa-email');
+  const html='<div style="'+FONTE_EMAIL+';color:#202124">' + previa.innerHTML + '</div>';
   try{
-    await navigator.clipboard.writeText(area.value);
-    recado('recado-email','Texto copiado — cole no e-mail.','var(--ok)');
-  }catch(e){
-    area.select(); document.execCommand&&document.execCommand('copy');
-    recado('recado-email','Texto selecionado. Use Ctrl+C para copiar.','var(--atencao)');
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html':  new Blob([html], {type:'text/html'}),
+      'text/plain': new Blob([textoEmailDia()], {type:'text/plain'})
+    })]);
+    recado('recado-email','Copiado com a formatação — cole no e-mail.','var(--ok)');
+    return;
+  }catch(e){ /* navegador sem suporte: cai na seleção */ }
+  try{
+    const sel=window.getSelection(), r=document.createRange();
+    r.selectNodeContents(previa); sel.removeAllRanges(); sel.addRange(r);
+    const ok=document.execCommand && document.execCommand('copy');
+    sel.removeAllRanges();
+    recado('recado-email', ok?'Copiado com a formatação — cole no e-mail.'
+      :'Selecione a prévia e use Ctrl+C.', ok?'var(--ok)':'var(--atencao)');
+  }catch(e2){
+    recado('recado-email','Selecione a prévia e use Ctrl+C.','var(--atencao)');
   }
 }
 
@@ -5721,6 +5793,18 @@ document.getElementById('btn-filtro-vdi').addEventListener('click',e=>{
 document.getElementById('btn-ordem-ind').addEventListener('click',()=>{ ordemInd.col=null; ordemInd.dir=-1; desenharIndicadores(); atualizarSlide(); });
 document.getElementById('btn-email-dia').addEventListener('click',abrirEmailDia);
 document.getElementById('btn-copiar-email').addEventListener('click',copiarEmailDia);
+document.getElementById('btn-copiar-assunto').addEventListener('click',async()=>{
+  const txt=assuntoEmailDia();
+  try{
+    await navigator.clipboard.writeText(txt);
+    recado('recado-email','Assunto copiado.','var(--ok)');
+  }catch(e){
+    const sel=window.getSelection(), r=document.createRange();
+    r.selectNodeContents(document.getElementById('assunto-email'));
+    sel.removeAllRanges(); sel.addRange(r);
+    recado('recado-email','Assunto selecionado. Use Ctrl+C.','var(--atencao)');
+  }
+});
 document.getElementById('btn-fechar-email').addEventListener('click',()=>{ document.getElementById('caixa-email').hidden=true; });
 document.getElementById('btn-ordem-fech').addEventListener('click',()=>{ ordemFech={col:null,dir:-1}; desenharFechamento(); atualizarSlide(); });
 (function(){
@@ -6677,7 +6761,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v19 · 01/09';
+const VERSAO = 'v22 · 01/09';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
