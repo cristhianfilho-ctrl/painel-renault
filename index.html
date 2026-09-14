@@ -1362,7 +1362,21 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
         <p class="dica">Faturados = soma da coluna <code>( = ) Total</code>: 1 venda efetiva, −1 devolução não refaturada, 0 devolução refaturada. A coluna <code>Margem</code> soma a Margemvlr de <b>todas</b> as linhas, devoluções incluídas, porque elas estornam carros contabilizados em meses anteriores. <code>TKM Mrg</code> = Margem ÷ faturados. <code>% Emplac</code> = emplacados ÷ vendas efetivas. <code>% Capt/Total</code> = captações ÷ ( = ) Total. Emplacamento e Captação VU = média das colunas % Emplac e % Capt/Total, onde 0 é não e 100% é sim.</p>
       </div>
     </div>
-  </section>
+  
+    <div class="bloco">
+      <h2>Margem bruta · reunião de segunda
+        <span class="controles">
+          <button class="acao miudo" id="btn-limpar-reuniao">Limpar margens</button>
+          <button class="acao miudo destaque-btn" data-slide="reuniao">Slide</button>
+        </span>
+      </h2>
+      <div class="miolo">
+        <p class="dica">Vendas vêm do acompanhamento do mês. A margem de cada loja é digitada aqui,
+          considerando <b>todas</b> as vendas — inclusive as que não entram na VN.</p>
+        <div class="rolagem" id="tabela-reuniao"></div>
+      </div>
+    </div>
+</section>
 
   <section class="painel" id="aba-fechamento" hidden>
     <p class="dica" id="aviso-fechado" hidden style="margin:0 0 14px;">
@@ -2031,7 +2045,7 @@ function marcaRenault(ctx,cx,cy,h,alfa){
   ctx.restore();
 }
 
-function molduraEstoque(ctx,W,H,titulo,subtitulo){
+function molduraEstoque(ctx,W,H,titulo,subtitulo,alto){
   const S=W/1200;
   const px=v=>v*S;
 
@@ -2064,22 +2078,25 @@ function molduraEstoque(ctx,W,H,titulo,subtitulo){
   ctx.font=`700 ${px(13.5)}px Montserrat, Barlow, sans-serif`;
   ctx.fillText('A MAIOR CONCESSIONÁRIA RENAULT DO NORDESTE',px(1142),px(637));
 
-  /* títulos */
+  /* títulos — em "alto" eles sobem e sobra mais altura para a tabela */
+  const yTit = alto ? px(118) : px(172);
   ctx.textAlign='center';
-  ctx.font=`700 ${px(30)}px Montserrat, Barlow, sans-serif`;
-  ctx.fillText(titulo,W/2,px(172));
-  let topo=px(212);
+  ctx.font=`700 ${px(alto?26:30)}px Montserrat, Barlow, sans-serif`;
+  ctx.fillText(titulo,W/2,yTit);
+  let topo = yTit + px(alto?30:40);
   if(subtitulo){
     ctx.fillStyle=CORES_SLIDE.amarelo;
-    ctx.font=`700 ${px(22)}px "IBM Plex Mono", Montserrat, Barlow, sans-serif`;
-    ctx.fillText(subtitulo,W/2,px(220));
+    ctx.font=`700 ${px(alto?18:22)}px "IBM Plex Mono", Montserrat, Barlow, sans-serif`;
+    const ySub = yTit + px(alto?32:48);
+    ctx.fillText(subtitulo,W/2,ySub);
     ctx.fillStyle=CORES_SLIDE.texto;
     const w=ctx.measureText(subtitulo).width;
     ctx.strokeStyle=CORES_SLIDE.texto; ctx.lineWidth=px(1.8);
-    ctx.beginPath(); ctx.moveTo(W/2-w/2,px(226)); ctx.lineTo(W/2+w/2,px(226)); ctx.stroke();
-    topo=px(254);
+    ctx.beginPath(); ctx.moveTo(W/2-w/2,ySub+px(6)); ctx.lineTo(W/2+w/2,ySub+px(6)); ctx.stroke();
+    topo = ySub + px(alto?26:34);
   }
-  return {S,px,topo,esq:px(40),larg:px(1120),alt:px(552)-topo};
+  const base = alto ? px(600) : px(552);
+  return {S,px,topo,esq:px(40),larg:px(1120),alt:base-topo,base};
 }
 function tabelaEstoque(ctx,area,cols,linhas,rodape){
   const {px,esq,larg,topo}=area;
@@ -2219,8 +2236,8 @@ function tabelaEstoque(ctx,area,cols,linhas,rodape){
 // ═══ SLIDE: ESTOQUE ATUAL — 3 colunas (uma por praça), formato 1920×1080 ═══
 
 function desenharSlideEstoqueAtual(ctx,W,H){
-  const area = molduraEstoque(ctx,W,H,`ESTOQUE ATUAL (${allEstoque.length})`);
-  const {S,px,topo,esq,larg} = area;
+  const area = molduraEstoque(ctx,W,H,`ESTOQUE ATUAL (${allEstoque.length})`,null,true);
+  const {S,px,topo,esq,larg,base} = area;
   const ORDEM=['BAHIA','PERNAMBUCO','PARAÍBA'];
   const pracas=[...ORDEM.filter(p=>allEstoque.some(r=>r.praca===p)),
     ...[...new Set(allEstoque.map(r=>r.praca))].filter(p=>!ORDEM.includes(p)).sort()];
@@ -2235,7 +2252,13 @@ function desenharSlideEstoqueAtual(ctx,W,H){
 
   const gap=px(12);
   const colW=(larg - gap*(pracas.length-1)) / pracas.length;
-  let F=px(15);
+
+  /* a praça com mais modelos manda no tamanho da letra: a coluna mais alta
+     tem de caber entre o topo da tabela e as faixas do rodapé */
+  const linhasPorPraca = pracas.map(p => Object.values(ag).filter(r => r.praca===p).length);
+  const maiorColuna = Math.max(1, ...linhasPorPraca);
+  const unidades = 1.6 + 1.4 + maiorColuna*1.25 + 1.6;   /* cabeçalho + títulos + linhas + total */
+  let F = Math.min(px(15), (base - topo) / unidades);
   const pad=px(5);
   const hCab=F*1.6, hFam=F*1.4, hLin=F*1.25, hTot=F*1.6;
   const fDisp='"Barlow Condensed",Barlow,sans-serif';
@@ -3040,7 +3063,7 @@ function semanas(){
   t.innerHTML=head+body+foot;
 }
 function comparativo(){
-  const META_AVAL=30, META_CONV=4;
+  const META_AVAL=50, META_CONV=4;   /* avaliação sobre possibilidades passadas */
   const rows=escopo().map(x=>({loja:x.loja,praca:x.praca,poss:x.poss_pass,aval:x.aval,vend:x.vend,
     tAval:x.poss_pass?Math.round(x.aval/x.poss_pass*100):0,
     tVend:x.aval?Math.round(x.vend/x.aval*100):0,
@@ -3724,6 +3747,7 @@ async function buscar(k){
 }
 async function salvarTudo(quieto){
   await guardar('config',estado.config);
+  await guardar('reuniao',estado.reuniao||{margem:{}});
   await guardar('rvd',estado.rvd);
   await guardar('vendas',estado.vendas);
   await guardar('historico',historico);
@@ -3734,7 +3758,9 @@ async function salvarTudo(quieto){
 }
 async function carregarTudo(){
   const c=await buscar('config'),r=await buscar('rvd'),v=await buscar('vendas'),h=await buscar('historico'),i=await buscar('indicadores'),vd=await buscar('vdi');
+  const re=await buscar('reuniao');
   if(c)estado.config=c; if(r)estado.rvd=r; if(v)estado.vendas=v; if(Array.isArray(h))historico=h; if(i)estado.indicadores=i; if(Array.isArray(vd))estado.vdi=vd;
+  estado.reuniao = (re && re.margem) ? re : {margem:{}};
   /* Cada pedaço que não está gravado vem do retrato do mês, se existir, ou
      zerado. Sem isso o mês novo herdaria os números de agosto que vêm no
      PADRAO do arquivo. */
@@ -3744,6 +3770,7 @@ async function carregarTudo(){
   if(!r) estado.rvd = (rt && rt.rvd) ? rt.rvd : {margem:zerosLoja(),faturados:zerosLoja()};
   if(!i) estado.indicadores = (rt && rt.indicadores) ? rt.indicadores : {};
   if(!vd) estado.vdi = (rt && Array.isArray(rt.vdi)) ? rt.vdi : [];
+  if(!re && rt && rt.reuniao) estado.reuniao = rt.reuniao;
   if(!Array.isArray(h)) historico=[];
   if(!v && rt && rt.gerado) atualizadoEm=rt.gerado;
 
@@ -3757,7 +3784,7 @@ const zerosLoja=()=>{const o={};NOMES.forEach(n=>o[n]=0);return o;};
 
 /* mês novo começa sem venda e sem faturamento; só as metas vêm de referência */
 function estadoZerado(cfg){
-  return {config:JSON.parse(JSON.stringify(cfg||estado.config)),
+  return {config:JSON.parse(JSON.stringify(cfg||estado.config)), reuniao:{margem:{}},
     rvd:{margem:zerosLoja(),faturados:zerosLoja()},
     vendas:{dias:{},virados:{}},
     indicadores:{}, vdi:[]};
@@ -3797,7 +3824,7 @@ function desenharSeletorMes(){
 /* Mês fechado é só consulta: ficam a aba Fechamento — com os Indicadores VN
    dentro dela — e a de Ajustes. As outras somem, porque não há mais o que
    lançar. */
-let blocoIndOriginal=null;
+let blocoIndOriginal=null;   /* blocos da aba Indicadores, movidos no mês fechado */
 function aplicarModoFechado(){
   const fechado=mesFechado(mesVendas);
   const abas=document.querySelectorAll('#view-vendas nav button[data-aba]');
@@ -3812,13 +3839,12 @@ function aplicarModoFechado(){
   const secInd=document.getElementById('aba-indicadores');
   const secFech=document.getElementById('aba-fechamento');
   if(!secInd||!secFech) return;
-  if(!blocoIndOriginal) blocoIndOriginal=secInd.querySelector('.bloco');
-  if(!blocoIndOriginal) return;
-  if(fechado){
-    if(blocoIndOriginal.parentElement!==secFech) secFech.appendChild(blocoIndOriginal);
-  } else {
-    if(blocoIndOriginal.parentElement!==secInd) secInd.appendChild(blocoIndOriginal);
-  }
+  if(!blocoIndOriginal) blocoIndOriginal=[...secInd.querySelectorAll('.bloco')];
+  if(!blocoIndOriginal.length) return;
+  blocoIndOriginal.forEach(b=>{
+    const destino = fechado ? secFech : secInd;
+    if(b.parentElement!==destino) destino.appendChild(b);
+  });
 
   /* se a aba aberta deixou de existir, cai no Fechamento */
   const ativa=document.querySelector('#view-vendas nav button[aria-selected="true"]');
@@ -4078,6 +4104,70 @@ function desenharAcompanhamento(){
       desenharAcompanhamento(); atualizarSlide();
     });
   });
+}
+
+/* ============ margem bruta · reunião de segunda ============ */
+/* Vendas saem do acompanhamento (mesma conta do placar). A margem é digitada
+   aqui, porque considera todas as vendas, não só o que aparece na VN. */
+const margemReuniao=l=>((estado.reuniao||{}).margem||{})[l]||0;
+
+function linhasReuniao(){
+  const t=acumulado();
+  return NOMES.map(n=>{
+    const vendas=somaLoja(t,n);
+    const margem=margemReuniao(n);
+    return {loja:n, meta:estado.config.metaTotal[n]||0, vendas, margem,
+            ticket: vendas ? margem/vendas : 0};
+  });
+}
+
+function desenharReuniao(){
+  const linhas=linhasReuniao();
+  const sm=k=>linhas.reduce((a,r)=>a+r[k],0);
+  const vG=sm('vendas'), mG=sm('margem');
+  const corpo=linhas.map(r=>`<tr>
+      <th>${r.loja}</th>
+      <td class="forte">${r.vendas}</td>
+      <td><input type="number" step="0.01" min="0" data-margem="${r.loja}" value="${r.margem||''}" placeholder="0,00"></td>
+      <td class="${r.vendas?'':'zero'}">${r.vendas?fmtReal(r.ticket):'—'}</td>
+    </tr>`).join('');
+  document.getElementById('tabela-reuniao').innerHTML=`<table class="editavel">
+    <thead><tr><th>Loja</th><th>Vendas</th><th>Margem todas vendas</th><th>Margem por venda</th></tr></thead>
+    <tbody>${corpo}</tbody>
+    <tfoot><tr><th>Eurovia</th><td>${vG}</td><td class="destaque">${fmtReal(mG)}</td>
+      <td class="destaque">${vG?fmtReal(mG/vG):'—'}</td></tr></tfoot></table>`;
+
+  document.querySelectorAll('#tabela-reuniao input[data-margem]').forEach(inp=>{
+    inp.addEventListener('change',async()=>{
+      const val=Math.max(0,parseFloat(String(inp.value).replace(',','.'))||0);
+      estado.reuniao=estado.reuniao||{margem:{}};
+      estado.reuniao.margem[inp.dataset.margem]=val;
+      await salvarTudo();
+      desenharReuniao();
+      if(slideAtual==='reuniao') gerarSlide('reuniao');
+    });
+  });
+}
+
+/* slide da reunião */
+function slideReuniao(ctx,W,H){
+  const area=molduraSlide(ctx,W,H,'MARGEM BRUTA COM TODAS AS VENDAS',mesDoPainel());
+  const linhas=linhasReuniao();
+  const sm=k=>linhas.reduce((a,r)=>a+r[k],0);
+  const vG=sm('vendas'), mG=sm('margem'), tG=vG?mG/vG:0;
+
+  const cols=[{rot:'Loja',esq:true},{rot:'Vendas',destaque:true},
+    {rot:'Margem todas vendas',destaque:true},{rot:'Margem por venda'}];
+
+  const corpo=linhas.map(r=>[{t:r.loja,forte:true},
+    {t:String(r.vendas),forte:true},
+    {t:fmtReal(r.margem),forte:true,cor:r.margem?null:'grade'},
+    {t:r.vendas?fmtReal(r.ticket):'—',cor:r.vendas?(r.ticket>=tG?'ok':'alerta'):'grade'}]);
+
+  const rod=[{t:'EUROVIA',forte:true},{t:String(vG),forte:true},
+    {t:fmtReal(mG),forte:true,cor:'amarelo'},{t:vG?fmtReal(tG):'—',forte:true,cor:'amarelo'}];
+
+  desenharTabelaSlide(ctx,area,cols,corpo,rod);
 }
 
 /* ============ fechamento do mês ============ */
@@ -5138,7 +5228,8 @@ const SLIDES={
   semanal:{fn:slideSemanal,titulo:'Slide · Comparativo vendas semanal',secao:'aba-semanal'},
   detalhe:{fn:slideDetalheSemana,titulo:'Slide · Gestores destaques',secao:'aba-semanal'},
   indicadores:{fn:slideIndicadores,titulo:'Slide · Indicadores VN',secao:'aba-indicadores'},
-  fechamento:{fn:slideFechamento,titulo:'Slide · Fechamento do mês',secao:'aba-fechamento'}
+  fechamento:{fn:slideFechamento,titulo:'Slide · Fechamento do mês',secao:'aba-fechamento'},
+  reuniao:{fn:slideReuniao,titulo:'Slide · Margem bruta',secao:'aba-indicadores'}
 };
 /* O canvas era fixo em 1920×1080, o que faz o e-mail inserir a imagem
    enorme. A largura define tudo: a moldura escala por S = W/1200. */
@@ -5658,7 +5749,7 @@ function desenharAjustes(){
   });
 }
 
-function atualizar(){ if(window.atualizarResumoVendas) setTimeout(window.atualizarResumoVendas,0); if(slideAtual) setTimeout(()=>gerarSlide(slideAtual),0); desenharPlacar(); desenharSemanal(); desenharAcompanhamento(); desenharCadencia(); desenharIndicadores(); desenharVDI(); desenharVendasDiarias(); desenharDias(); desenharFechamento(); desenharAjustes(); desenharResumoVN(); marcarEstado(); }
+function atualizar(){ if(window.atualizarResumoVendas) setTimeout(window.atualizarResumoVendas,0); if(slideAtual) setTimeout(()=>gerarSlide(slideAtual),0); desenharPlacar(); desenharSemanal(); desenharAcompanhamento(); desenharCadencia(); desenharIndicadores(); desenharVDI(); desenharVendasDiarias(); desenharDias(); desenharFechamento(); desenharReuniao(); desenharAjustes(); desenharResumoVN(); marcarEstado(); }
 
 /* ============ leitura ============ */
 function mostrarLeitura(res){
@@ -5791,6 +5882,12 @@ document.getElementById('btn-filtro-vdi').addEventListener('click',e=>{
   desenharVDI();
 });
 document.getElementById('btn-ordem-ind').addEventListener('click',()=>{ ordemInd.col=null; ordemInd.dir=-1; desenharIndicadores(); atualizarSlide(); });
+document.getElementById('btn-limpar-reuniao').addEventListener('click',async()=>{
+  if(!confirm('Apagar as margens digitadas deste mês?')) return;
+  estado.reuniao={margem:{}};
+  await salvarTudo(); desenharReuniao();
+  if(slideAtual==='reuniao') gerarSlide('reuniao');
+});
 document.getElementById('btn-email-dia').addEventListener('click',abrirEmailDia);
 document.getElementById('btn-copiar-email').addEventListener('click',copiarEmailDia);
 document.getElementById('btn-copiar-assunto').addEventListener('click',async()=>{
@@ -5820,7 +5917,7 @@ document.getElementById('btn-ordem-fech').addEventListener('click',()=>{ ordemFe
 function montarBackup(){
   return {versao:2,gerado:new Date().toISOString(),mes:mesVendas,
     config:estado.config,rvd:estado.rvd,vendas:estado.vendas,
-    indicadores:estado.indicadores,vdi:estado.vdi,historico};
+    indicadores:estado.indicadores,vdi:estado.vdi,reuniao:estado.reuniao||{margem:{}},historico};
 }
 function nomeBackup(){
   const d=new Date(), p=n=>String(n).padStart(2,'0');
@@ -5842,6 +5939,7 @@ async function aplicarBackup(o,fonte){
   estado.vendas=o.vendas;
   historico=Array.isArray(o.historico)?o.historico.filter(h=>h&&typeof h==='object'):[];
   estado.indicadores=o.indicadores||{}; estado.vdi=Array.isArray(o.vdi)?o.vdi:[];
+  estado.reuniao=(o.reuniao&&o.reuniao.margem)?o.reuniao:{margem:{}};
   fonteAtual=fonte||null;
   await salvarTudo(true);
   /* a hora que vale é a do backup, não a de agora */
@@ -6524,7 +6622,7 @@ function qualDesenharSlide(){
 
   const m = meses.find(x => x.nome === mesSel);
   const area = molduraEstoque(ctx, W, H, 'Qualidade - ' + (m ? m.titulo : ''),
-    `VOC Index ≥ ${OBJ.vocMes}%  ·  Retorno ≤ ${OBJ.retorno}%  ·  GMB ≥ ${f1(OBJ.gmb)}`);
+    `VOC Index ≥ ${OBJ.vocMes}%  ·  Retorno ≤ ${OBJ.retorno}%  ·  GMB ≥ ${f1(OBJ.gmb)}`, true);
 
   const apagado = '#9aa0a6';
   const corDe = c => c === 'v-up' ? CORES_SLIDE.ok
@@ -6549,7 +6647,84 @@ function qualDesenharSlide(){
     return cel;
   });
 
-  tabelaOficina(ctx, area, cols, linhas, null);
+  const fim = tabelaOficina(ctx, area, cols, linhas, null);
+  desenharVozNoSlide(ctx, area, fim);
+}
+
+/* Voz do cliente no mesmo slide, logo abaixo da tabela: uma linha por loja
+   com retorno, quebrando o texto na largura disponível. */
+function desenharVozNoSlide(ctx, area, yIni){
+  const {px, esq, larg, base} = area;
+  const limpa = s => String(s||'').replace(/^-$/,'').replace(/\s*\n\s*/g,' · ').replace(/\s+/g,' ').trim();
+  const itens = ordenar(dadosMes())
+    .filter(r => limpa(r.motivo) || limpa(r.verbal))
+    .map(r => ({
+      loja: (ROTULO[r.loja] || r.loja).toUpperCase(),
+      ret: r.retorno === null || r.retorno === undefined ? '' : fPct(r.retorno),
+      txt: [limpa(r.motivo), limpa(r.verbal)].filter(Boolean).join('   ·   ')
+    }));
+
+  const fDisp = '"Barlow Condensed",Barlow,sans-serif';
+  let y0 = yIni + px(20);
+  const disponivel = base - y0 - px(6);
+  if(!itens.length || disponivel < px(40)) return;
+
+  /* quebra o texto em linhas que cabem na largura */
+  const quebrar = (txt, F, largTxt) => {
+    ctx.font = `500 ${F}px ${fDisp}`;
+    const palavras = txt.split(' ');
+    const linhas = []; let atual = '';
+    palavras.forEach(p => {
+      const teste = atual ? atual + ' ' + p : p;
+      if(ctx.measureText(teste).width <= largTxt) atual = teste;
+      else { if(atual) linhas.push(atual); atual = p; }
+    });
+    if(atual) linhas.push(atual);
+    return linhas;
+  };
+
+  /* escolhe a maior letra que ainda faz tudo caber */
+  let F = px(13), blocos = null;
+  for(; F >= px(7.5); F -= px(0.5)){
+    const largLoja = px(150);
+    const largTxt = larg - largLoja - px(12);
+    blocos = itens.map(i => quebrar(i.txt, F, largTxt));
+    const alturaTitulo = F*1.9;
+    const alto = alturaTitulo + blocos.reduce((a,b) => a + Math.max(1,b.length)*F*1.35 + F*0.5, 0);
+    if(alto <= disponivel) break;
+  }
+
+  /* título da seção */
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = CORES_SLIDE.amarelo;
+  ctx.font = `700 ${F*1.05}px ${fDisp}`;
+  ctx.fillText('VOZ DO CLIENTE', esq, y0);
+  ctx.strokeStyle = CORES_SLIDE.grade; ctx.lineWidth = px(1);
+  const wTit = ctx.measureText('VOZ DO CLIENTE').width;
+  ctx.beginPath(); ctx.moveTo(esq + wTit + px(10), y0); ctx.lineTo(esq + larg, y0); ctx.stroke();
+  let y = y0 + F*1.5;
+
+  const largLoja = px(150);
+  itens.forEach((i, k) => {
+    const linhas = blocos[k];
+    const alto = Math.max(1, linhas.length) * F*1.35;
+    if(k % 2 === 0){
+      ctx.fillStyle = CORES_SLIDE.linhaA;
+      ctx.fillRect(esq, y - F*0.5, larg, alto + F*0.6);
+    }
+    ctx.fillStyle = CORES_SLIDE.texto;
+    ctx.font = `700 ${F}px ${fDisp}`;
+    ctx.fillText(i.loja, esq + px(6), y + F*0.35);
+    if(i.ret){
+      ctx.fillStyle = '#9aa0a6';
+      ctx.font = `500 ${F*0.85}px "IBM Plex Mono",monospace`;
+      ctx.fillText(i.ret, esq + px(6) + ctx.measureText('').width + px(88), y + F*0.35);
+    }
+    ctx.fillStyle = '#cfd3d7';
+    ctx.font = `500 ${F}px ${fDisp}`;
+    linhas.forEach((ln, li) => ctx.fillText(ln, esq + largLoja, y + F*0.35 + li*F*1.35));
+    y += alto + F*0.5;
+  });
 }
 
 async function qualAbrirSlide(){
@@ -6761,7 +6936,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v22 · 01/09';
+const VERSAO = 'v23 · 14/09';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
