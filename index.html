@@ -3224,7 +3224,8 @@ async function lerPlanilhaDoMes(m){
 /* ── cadastro dos meses ── */
 function guardarMeses(){
   try{
-    localStorage.setItem(CH_OFI_MESES, JSON.stringify(mesesOfi.filter(m => m.tipo !== 'embutida')));
+    /* os meses que já vêm no arquivo não precisam ser guardados nem viajar */
+    localStorage.setItem(CH_OFI_MESES, JSON.stringify(mesesOfi.filter(m => !m.fixo && m.tipo !== 'embutida')));
     localStorage.setItem(CH_OFI_MES, mesOfi);
   }catch(e){}
 }
@@ -3332,6 +3333,23 @@ function ofiTrocarMes(ym){
   desenharMesesOfi();
   carregar();
 }
+
+/* Recebe a lista de meses que veio no backup do Drive (o painel de vendas
+   repassa). Assim, um mês cadastrado num computador aparece nos outros. */
+window.registrarMesesOficina = function(lista){
+  if(!Array.isArray(lista) || !lista.length) return;
+  let mudou=false;
+  lista.forEach(m=>{
+    if(!m || !m.ym || !m.chave) return;
+    const i=mesesOfi.findIndex(x=>x.ym===m.ym);
+    if(i<0){ mesesOfi.push({ym:m.ym, rot:m.rot||rotuloYM(m.ym), tipo:m.tipo||'id', chave:m.chave}); mudou=true; }
+    else if(!mesesOfi[i].fixo && mesesOfi[i].chave!==m.chave){ mesesOfi[i].chave=m.chave; mesesOfi[i].tipo=m.tipo||'id'; mudou=true; }
+  });
+  if(!mudou) return;
+  mesesOfi.sort((a,b)=>a.ym.localeCompare(b.ym));
+  guardarMeses();
+  desenharMesesOfi();
+};
 
 window.ofiCadastrarMes = ofiCadastrarMes;
 window.ofiRemoverMes   = ofiRemoverMes;
@@ -3695,6 +3713,23 @@ const PREFIXO='eurovia:v1:';
 const chaveDoMes=ym=>ym===MES_BASE?PREFIXO:PREFIXO+ym+':';
 let CHAVE=chaveDoMes(MES_BASE);
 let mesesConhecidos=MESES_FIXOS.slice();
+/* Todo mês de agosto/26 até o mês seguinte ao corrente existe no seletor, em
+   qualquer dispositivo. Mês sem nada gravado simplesmente abre zerado. */
+function mesesDoCalendario(){
+  const [a0,m0]=MES_BASE.split('-').map(Number);
+  const h=new Date();
+  const fim=new Date(h.getFullYear(), h.getMonth()+1, 1);   /* um mês à frente */
+  const out=[]; let dt=new Date(a0, m0-1, 1);
+  while(dt<=fim && out.length<60){
+    out.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'));
+    dt=new Date(dt.getFullYear(), dt.getMonth()+1, 1);
+  }
+  return out;
+}
+function juntarMeses(lista){
+  (lista||[]).forEach(m=>{ if(/^\d{4}-\d{2}$/.test(m) && mesesConhecidos.indexOf(m)<0) mesesConhecidos.push(m); });
+  mesesConhecidos.sort();
+}
 /* ajustes que valem para todos os meses */
 const GLOBAIS=['drive','meses','mes'];
 
@@ -3756,7 +3791,7 @@ async function salvarTudo(quieto){
   if(!quieto){ atualizadoEm=new Date().toISOString(); await guardar('atualizado',atualizadoEm); }
   marcarEstado();
 }
-async function carregarTudo(){
+async function carregarTudo(){   /* devolve true se este dispositivo já tinha o mês gravado */
   const c=await buscar('config'),r=await buscar('rvd'),v=await buscar('vendas'),h=await buscar('historico'),i=await buscar('indicadores'),vd=await buscar('vdi');
   const re=await buscar('reuniao');
   if(c)estado.config=c; if(r)estado.rvd=r; if(v)estado.vendas=v; if(Array.isArray(h))historico=h; if(i)estado.indicadores=i; if(Array.isArray(vd))estado.vdi=vd;
@@ -3778,6 +3813,7 @@ async function carregarTudo(){
   if(!drive.url && DRIVE_PADRAO.url) drive.url=DRIVE_PADRAO.url;
   const f=await buscar('fonte'); if(f&&typeof f==='object') fonteAtual=f;
   const at=await buscar('atualizado'); if(at) atualizadoEm=at;
+  return !!v;
 }
 /* ============ mês do painel ============ */
 const zerosLoja=()=>{const o={};NOMES.forEach(n=>o[n]=0);return o;};
@@ -3873,7 +3909,8 @@ async function trocarMes(ym){
   estado=estadoZerado(cfgAnterior); historico=[]; fonteAtual=null; atualizadoEm=null;
   ultimaLeitura=null; ultimoTexto='';
 
-  await carregarTudo();                        /* se o mês já existia, volta como estava */
+  const tinhaLocal = await carregarTudo();     /* se o mês já existia aqui, volta como estava */
+  if(!tinhaLocal && drive.url) await driveLerDoMes(ym);   /* senão procura no Drive */
   if(inedito){
     mesesConhecidos.push(ym);
     await guardar('meses',mesesConhecidos);
@@ -5917,8 +5954,24 @@ document.getElementById('btn-ordem-fech').addEventListener('click',()=>{ ordemFe
 function montarBackup(){
   return {versao:2,gerado:new Date().toISOString(),mes:mesVendas,
     config:estado.config,rvd:estado.rvd,vendas:estado.vendas,
-    indicadores:estado.indicadores,vdi:estado.vdi,reuniao:estado.reuniao||{margem:{}},historico};
+    indicadores:estado.indicadores,vdi:estado.vdi,reuniao:estado.reuniao||{margem:{}},
+    registro:montarRegistro(),historico};
 }
+/* Lista de meses dos painéis. Vai junto do backup para que um mês criado em
+   um computador apareça nos outros — o Drive é o que todos leem. */
+function montarRegistro(){
+  let oficina=[];
+  try{ oficina=JSON.parse(localStorage.getItem('eurovia_oficina_meses')||'[]')||[]; }catch(e){}
+  return {vendas:mesesConhecidos.slice(), oficina:oficina};
+}
+function aplicarRegistro(reg){
+  if(!reg || typeof reg!=='object') return;
+  const antes=mesesConhecidos.length;
+  juntarMeses(reg.vendas);
+  if(mesesConhecidos.length!==antes){ desenharSeletorMes(); guardar('meses',mesesConhecidos); }
+  if(Array.isArray(reg.oficina) && window.registrarMesesOficina) window.registrarMesesOficina(reg.oficina);
+}
+
 function nomeBackup(){
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   return 'backup-eurovia-'+mesVendas+'-em-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json';
@@ -6006,6 +6059,7 @@ async function driveLerUltimo(quieto){
     driveSelo('lendo a pasta…');
     const o=await driveGet({acao:'ultimo'});
     const a=o.arquivo||{};
+    aplicarRegistro((o.conteudo||{}).registro);   /* meses novos aparecem mesmo sem carregar os dados */
     const mb=mesDoBackup(o.conteudo);
     if(mb && mb!==mesVendas){
       driveSelo('backup de outro mês');
@@ -6058,6 +6112,34 @@ async function driveEnviar(){
   }
 }
 
+/* procura na pasta o backup mais recente do mês pedido. Os nomes carregam o
+   mês (backup-eurovia-2026-10-em-…), então dá para achar sem baixar tudo. */
+async function driveLerDoMes(ym){
+  try{
+    driveSelo('procurando '+rotuloMes(ym)+' no Drive…');
+    const o=await driveGet({acao:'listar',limite:'100'});
+    const arqs=(o.arquivos||[]).filter(a=>String(a.nome||'').indexOf('-'+ym+'-')>=0);
+    if(!arqs.length){
+      driveSelo('mês sem backup');
+      driveInfo('Não achei backup de '+rotuloMes(ym)+' na pasta. O mês abriu zerado — o primeiro envio cria o arquivo.');
+      marcarFonte(); return false;
+    }
+    const a=arqs[0];
+    const b=await driveGet({acao:'arquivo',id:a.id});
+    aplicarRegistro((b.conteudo||{}).registro);
+    const mb=mesDoBackup(b.conteudo);
+    if(mb && mb!==ym){ driveSelo('backup não confere'); marcarFonte(); return false; }
+    await aplicarBackup(b.conteudo,{id:a.id,nome:a.nome,data:a.data,origem:'Drive',lido:agoraBR()});
+    driveSelo('backup carregado');
+    driveInfo(rotuloMes(ym)+' veio do Drive: <b>'+a.nome+'</b> · gravado em '+dataBR(a.data)+'.','ok');
+    return true;
+  }catch(err){
+    driveSelo('não consegui buscar');
+    driveInfo('Não deu para procurar '+rotuloMes(ym)+' na pasta: '+err.message,'ruim');
+    return false;
+  }
+}
+
 /* lista os arquivos da pasta e deixa carregar qualquer um deles */
 async function driveListar(){
   const cx=document.getElementById('drive-lista');
@@ -6080,6 +6162,7 @@ async function driveCarregar(id,nome){
     driveSelo('carregando '+nome+'…');
     const o=await driveGet({acao:'arquivo',id});
     const a=o.arquivo||{nome};
+    aplicarRegistro((o.conteudo||{}).registro);
     await aplicarBackup(o.conteudo,{id:a.id,nome:a.nome,data:a.data,origem:'Drive',lido:agoraBR()});
     driveSelo('backup carregado');
     driveInfo('Relatório gerado a partir de <b>'+a.nome+'</b> · gravado no Drive em '+dataBR(a.data)+'.','ok');
@@ -6143,8 +6226,8 @@ document.getElementById('btn-zerar').addEventListener('click',async()=>{
 
 (async function inicio(){
   /* qual mês estava aberto e quais já existem */
-  const ms=await buscar('meses'); if(Array.isArray(ms)&&ms.length) mesesConhecidos=ms;
-  if(mesesConhecidos.indexOf(MES_BASE)<0) mesesConhecidos.unshift(MES_BASE);
+  const ms=await buscar('meses');
+  juntarMeses(MESES_FIXOS); juntarMeses(mesesDoCalendario()); juntarMeses(ms);
   const mv=await buscar('mes');
   const inicial=(mv && mesesConhecidos.indexOf(mv)>=0 && !mesFechado(mv)) ? mv : mesPadrao();
   mesVendas=inicial; CHAVE=chaveDoMes(inicial); SEMANAS=semanasDoMes(inicial);
@@ -6936,7 +7019,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v23 · 14/09';
+const VERSAO = 'v25 · 30/09';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
@@ -7056,9 +7139,9 @@ function renderHome(){
       id:'vendas', nome:'Painel de', destaque:'Vendas', link:'#vendas', interno:'vendas',
       desc:descVendas,
       metricas:[
+        {r:'Meta', v:n(V.meta)},
         {r:'Vendas', v:n(V.vendas), c:'amarelo'},
-        {r:'Faturados', v:n(V.faturados)},
-        {r:'Meta diária', v:n1(V.metaDiaria)}
+        {r:'Faturados', v:n(V.faturados)}
       ],
       barra:{esq:'Meta do mês', dir:`${n(V.vendas)} / ${n(V.meta)}`, pct:pctMeta},
       selo:seloVendas
