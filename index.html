@@ -3595,12 +3595,27 @@ window.baixarSlideOficina = baixarSlideOficina;
 (function(){
 
 /* ============ domínio ============ */
-const LOJAS=[
+const LOJAS_TODAS=[
   {nome:'IMBIRIBEIRA',praca:'PERNAMBUCO'},{nome:'PIEDADE',praca:'PERNAMBUCO'},
   {nome:'AFOGADOS',praca:'PERNAMBUCO'},{nome:'OLINDA',praca:'PERNAMBUCO'},
   {nome:'CABEDELO',praca:'PARAÍBA'},{nome:'EPITÁCIO',praca:'PARAÍBA'},
   {nome:'IGUATEMI',praca:'BAHIA'},{nome:'LAURO',praca:'BAHIA'}];
-const NOMES=LOJAS.map(l=>l.nome);
+
+/* Loja fechada: some do painel a partir do mês indicado e o que chegar no
+   nome dela (venda, faturamento, VDI) passa a contar na loja que assumiu.
+   Os meses anteriores continuam como estavam. */
+const LOJAS_FECHADAS={ CABEDELO:{desde:'2026-10', para:'EPITÁCIO'} };
+const fechouEm=(nome,ym)=>{ const f=LOJAS_FECHADAS[nome]; return f && ym>=f.desde ? f : null; };
+const lojasDoMes=ym=>LOJAS_TODAS.filter(l=>!fechouEm(l.nome,ym));
+/* redireciona o nome lido para a loja que vale no mês aberto */
+const redirLoja=nome=>{ const f=fechouEm(nome,mesVendas); return f ? f.para : nome; };
+
+let LOJAS=lojasDoMes('2026-08');
+let NOMES=LOJAS.map(l=>l.nome);
+function aplicarLojasDoMes(ym){
+  LOJAS=lojasDoMes(ym);
+  NOMES=LOJAS.map(l=>l.nome);
+}
 const MODELOS=['BOREAL','KARDIAN','DUSTER','KOLEOS','OROCH','KWID'];
 const COM_META=['BOREAL','KARDIAN','DUSTER'];
 
@@ -3639,7 +3654,7 @@ const semanaDe = d => SEMANAS.find(s=>d>=s.ini&&d<=s.fim) || null;
 const curto = d => { const p=String(d||'').split('-'); return p.length<3?(d||'—'):p[2]+'/'+p[1]; };
 
 const chave=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
-const MAPA_LOJA={}; NOMES.forEach(n=>MAPA_LOJA[chave(n)]=n);
+const MAPA_LOJA={}; LOJAS_TODAS.forEach(l=>MAPA_LOJA[chave(l.nome)]=l.nome);
 Object.assign(MAPA_LOJA,{epitacio:'EPITÁCIO',avepitacio:'EPITÁCIO',laurodefreitas:'LAURO'});
 const MAPA_MODELO={}; MODELOS.forEach(m=>MAPA_MODELO[chave(m)]=m);
 Object.assign(MAPA_MODELO,{kwidd:'KWID',dusters:'DUSTER',duste:'DUSTER',koleoss:'KOLEOS'});
@@ -3906,6 +3921,7 @@ async function trocarMes(ym){
   const cfgAnterior=JSON.parse(JSON.stringify(estado.config));
 
   mesVendas=ym; CHAVE=chaveDoMes(ym); SEMANAS=semanasDoMes(ym);
+  aplicarLojasDoMes(ym);
   estado=estadoZerado(cfgAnterior); historico=[]; fonteAtual=null; atualizadoEm=null;
   ultimaLeitura=null; ultimoTexto='';
 
@@ -3963,8 +3979,8 @@ function marcarFonte(){
 
 /* ============ cálculos ============ */
 function somar(destino,parcial){
-  Object.keys(parcial||{}).forEach(l=>{ if(!destino[l])return;
-    Object.keys(parcial[l]).forEach(m=>{ if(destino[l][m]!==undefined) destino[l][m]+=parcial[l][m]; }); });
+  Object.keys(parcial||{}).forEach(l0=>{ const l=redirLoja(l0); if(!destino[l])return;
+    Object.keys(parcial[l0]).forEach(m=>{ if(destino[l][m]!==undefined) destino[l][m]+=parcial[l0][m]; }); });
 }
 function acumulado(){
   const t=porLoja();
@@ -4020,7 +4036,8 @@ function lerItens(trecho,avisos,origem){
   return itens;
 }
 function interpretar(texto){
-  const avisos=[],dados=porLoja(); let declaradoGeral=null,itensGerais=null; const vistas=new Set();
+  const avisos=[],dados=porLoja(); let declaradoGeral=null,itensGerais=null;
+  const vistas=new Set(), redirecionadas=new Set();
   texto.split(/\r?\n/).forEach(bruta=>{
     const linha=bruta.trim(); if(!linha)return;
     const par=linha.match(/\(([^)]*)\)/);
@@ -4030,13 +4047,20 @@ function interpretar(texto){
       itensGerais=lerItens(par?par[1]:'',avisos,'no total geral'); return;
     }
     const nomeLido=antes.replace(/[:\-–—]/g,' ').replace(/\d+/g,' ').trim();
-    const loja=MAPA_LOJA[chave(nomeLido)]; if(!loja)return;
-    if(vistas.has(loja)) avisos.push(`${loja} aparece mais de uma vez. Considerei a última linha.`);
+    const lida=MAPA_LOJA[chave(nomeLido)]; if(!lida)return;
+    const loja=redirLoja(lida); if(!dados[loja])return;
+    /* duas linhas na mesma loja: se uma delas é de loja fechada, somam;
+       se é a mesma loja repetida de verdade, vale a última, como antes */
+    /* soma sempre que uma loja fechada estiver envolvida, em qualquer ordem */
+    const juntar = vistas.has(loja) && (lida!==loja || redirecionadas.has(loja));
+    if(lida!==loja) redirecionadas.add(loja);
+    if(vistas.has(loja) && !juntar) avisos.push(`${loja} aparece mais de uma vez. Considerei a última linha.`);
+    if(juntar) avisos.push(`${lida} está fechada: as vendas entraram em ${loja}.`);
     vistas.add(loja);
     const nA=antes.match(/(\d+)/); const declarado=nA?parseInt(nA[1],10):null;
-    const itens=lerItens(par?par[1]:'',avisos,loja);
-    MODELOS.forEach(m=>dados[loja][m]=itens[m]||0);
-    const soma=MODELOS.reduce((a,m)=>a+dados[loja][m],0);
+    const itens=lerItens(par?par[1]:'',avisos,lida);
+    MODELOS.forEach(m=>dados[loja][m]=(juntar?dados[loja][m]:0)+(itens[m]||0));
+    const soma=MODELOS.reduce((a,m)=>a+(itens[m]||0),0);
     if(declarado!==null&&declarado!==soma) avisos.push(`${loja}: a mensagem diz ${declarado}, os modelos somam ${soma}.`);
     if(!par&&declarado) avisos.push(`${loja}: número ${declarado} sem lista de modelos. Entrou zerada.`);
   });
@@ -4617,8 +4641,8 @@ function somaDias(dias){
   const t=porLoja();
   dias.forEach(d=>{
     const reg=estado.vendas.dias[d]; if(!reg) return;
-    Object.keys(reg).forEach(l=>{ if(!t[l]) return;
-      Object.keys(reg[l]).forEach(m=>{ if(t[l][m]!==undefined) t[l][m]+=reg[l][m]; }); });
+    Object.keys(reg).forEach(l0=>{ const l=redirLoja(l0); if(!t[l]) return;
+      Object.keys(reg[l0]).forEach(m=>{ if(t[l][m]!==undefined) t[l][m]+=reg[l0][m]; }); });
   });
   return t;
 }
@@ -5329,8 +5353,8 @@ function acharLoja(texto){
   const k=chave(texto);
   if(!k) return null;
   const direto=MAPA_LOJA[k];
-  if(direto) return direto;
-  for(const n of NOMES){ if(k.indexOf(chave(n))>=0) return n; }
+  if(direto) return redirLoja(direto);
+  for(const l of LOJAS_TODAS){ if(k.indexOf(chave(l.nome))>=0) return redirLoja(l.nome); }
   return null;
 }
 function acharColuna(cab,alvos){
@@ -5507,13 +5531,16 @@ function vazioInd(){
 }
 function dadosLoja(loja){
   const o=vazioInd();
-  const vn=((estado.indicadores||{}).porLoja||{})[loja];
-  if(vn){
+  const base=((estado.indicadores||{}).porLoja||{});
+  /* soma também o que ficou gravado no nome de uma loja fechada */
+  const fontes=[base[loja]].concat(Object.keys(LOJAS_FECHADAS)
+    .filter(n=>redirLoja(n)===loja && n!==loja).map(n=>base[n]));
+  fontes.filter(Boolean).forEach(vn=>{
     Object.keys(o).forEach(k=>{ if(k!=='modelos'&&vn[k]!==undefined) o[k]+=vn[k]; });
     if(vn.modelos) Object.keys(vn.modelos).forEach(m=>{ o.modelos[m]=(o.modelos[m]||0)+vn.modelos[m]; });
-  }
+  });
   (estado.vdi||[]).forEach(v=>{
-    if(v.destino!==loja) return;
+    if(redirLoja(v.destino)!==loja) return;
     const e=v.total||0, m=margemDoVDI(v);
     o.vdi++; o.linhas++; o.faturados+=e;
     o.modelos[acharModelo(v.familia,v.modelo,null)]+=e;
@@ -6231,6 +6258,7 @@ document.getElementById('btn-zerar').addEventListener('click',async()=>{
   const mv=await buscar('mes');
   const inicial=(mv && mesesConhecidos.indexOf(mv)>=0 && !mesFechado(mv)) ? mv : mesPadrao();
   mesVendas=inicial; CHAVE=chaveDoMes(inicial); SEMANAS=semanasDoMes(inicial);
+  aplicarLojasDoMes(inicial);
   desenharSeletorMes();
 
   /* a data do lançamento acompanha o dia em que o painel é aberto */
@@ -7019,7 +7047,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v25 · 30/09';
+const VERSAO = 'v26 · 06/10';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
