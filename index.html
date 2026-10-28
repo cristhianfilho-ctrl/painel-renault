@@ -252,7 +252,39 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
 }#view-oficina .ofi-slide-nota,#view-qualidade .ofi-slide-nota{
   padding:12px 18px 16px;border-top:1px solid #34393e;
   font-family:"Barlow",sans-serif;font-size:12px;line-height:1.6;color:#8b9095;
-}#view-oficina .ofi-slide-nota b,#view-qualidade .ofi-slide-nota b{color:#e8e9ea}#view-oficina .ofi-slide-recado,#view-qualidade .ofi-slide-recado{color:#4ade80;margin-left:8px;font-weight:600}/* cadeado na aba Ajustes do estoque */
+}#view-oficina .ofi-slide-nota b,#view-qualidade .ofi-slide-nota b{color:#e8e9ea}#view-oficina .ofi-slide-recado,#view-qualidade .ofi-slide-recado{color:#4ade80;margin-left:8px;font-weight:600}/* colunas de ano e cor no Resumo Geral */
+#view-estoque .col-ano{width:92px}
+#view-estoque .col-cor{width:220px}
+#view-estoque .cel-ano,#view-estoque .cel-cor{
+  font-size:.74rem;color:#b9bec3;line-height:1.35;white-space:normal;
+}
+#view-estoque .cel-ano .cq,#view-estoque .cel-cor .cq{
+  color:#ffce00;font-weight:700;margin-left:3px;font-size:.7rem;
+}
+
+/* botão de atualizar e filtros do painel de estoque */
+#view-estoque .btn-atualizar{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;font-size:11.5px;padding:7px 14px;cursor:pointer;border-radius:0;
+  background:#ffce00;color:#16181a;border:1px solid #ffce00;transition:.15s;margin-left:10px;
+}
+#view-estoque .btn-atualizar:hover{background:#ffd83d}
+#view-estoque .btn-atualizar[disabled]{opacity:.5;cursor:default}
+#view-estoque .filtro-sel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:-4px}
+#view-estoque .filtro-sel label{
+  font-family:"Barlow Condensed","Arial Narrow",sans-serif;text-transform:uppercase;
+  letter-spacing:.12em;font-size:10.5px;color:#8b9095;
+}
+#view-estoque .filtro-sel select{
+  font-family:"Barlow",sans-serif;font-size:12.5px;padding:6px 10px;border-radius:0;
+  background:#1f2225;color:#e8e9ea;border:1px solid #34393e;cursor:pointer;min-width:120px;
+}
+#view-estoque .filtro-sel select:focus{outline:none;border-color:#ffce00}
+#view-estoque .filtro-conta{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;color:#8b9095;margin-left:auto;
+}
+
+/* cadeado na aba Ajustes do estoque */
 #view-estoque nav .trava{font-size:10px;opacity:.75;letter-spacing:0;margin-left:2px}
 
 /* cabeçalho e caixa de link do painel de qualidade */
@@ -965,7 +997,8 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
         <span id="statusTxt">Sem dados</span>
       </div>
       <span class="carimbo" id="dataBadge">—</span>
-
+      <button class="btn-atualizar" id="btnAtualizarEstoque" onclick="buscarNoDrive(true)"
+              title="Ler a planilha mais recente da pasta do Drive">↻ Atualizar</button>
     </div>
   </header>
 
@@ -983,6 +1016,16 @@ body{background:#111112;color:#e8e9ea;font-family:"Barlow","Helvetica Neue",Aria
 
   <!-- FILTRO GLOBAL -->
   <div class="filtro-bar" id="filtroGlobal"></div>
+  <div class="filtro-bar filtro-sel" id="filtroDetalhe">
+    <label>Família:</label>
+    <select id="selFam" onchange="setFiltroFam(this.value)"><option>Todas</option></select>
+    <label>Modelo:</label>
+    <select id="selMod" onchange="setFiltroMod(this.value)"><option>Todos</option></select>
+    <label>Ano:</label>
+    <select id="selAno" onchange="setFiltroAno(this.value)"><option>Todos</option></select>
+    <button class="sf-btn" id="btnLimparFiltros" onclick="limparFiltrosEstoque()">Limpar</button>
+    <span class="filtro-conta" id="filtroConta"></span>
+  </div>
 
   <!-- TAB 0: RESUMO GERAL -->
   <div class="tab-panel active" id="p0">
@@ -1623,6 +1666,15 @@ const FAM_COR   = { 'BOREAL':'#B45309','KARDIAN':'#6D28D9','DUSTER':'#C2410C','O
 // ── STATE ────────────────────────────────────────────────────────────────────
 let allEstoque = [];
 let filtroP0 = 'TODAS', filtroP1 = 'TODAS', filtroP2 = 'TODAS';
+/* filtros de família, modelo e ano — valem para todas as abas */
+let filtroFam = 'TODAS', filtroMod = 'TODOS', filtroAno = 'TODOS';
+function passaDetalhe(r){
+  if(filtroFam !== 'TODAS' && r.familia !== filtroFam) return false;
+  if(filtroMod !== 'TODOS' && r.modelo !== filtroMod) return false;
+  if(filtroAno !== 'TODOS' && String(r.ano||'') !== filtroAno) return false;
+  return true;
+}
+const porPraca = praca => (praca === 'TODAS' ? allEstoque : allEstoque.filter(r => r.praca === praca)).filter(passaDetalhe);
 let alertaSort = { col:'dias', dir:'desc' };
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
@@ -1634,6 +1686,16 @@ function getPraca(empresa) {
   return 'OUTROS';
 }
 function cleanFam(s) { return String(s||'').replace(/\s*\(.*\)/,'').trim(); }
+/* "BRANCA 3 · PRETA 1" — do mais comum para o menos, cortando a cauda */
+function listaContagem(mapa, limite){
+  const itens = Object.entries(mapa||{}).sort((a,b)=> b[1]-a[1] || String(a[0]).localeCompare(String(b[0])));
+  if(!itens.length) return '—';
+  if(itens.length===1) return itens[0][0];
+  const mostra = itens.slice(0, limite||3);
+  const resto  = itens.slice(limite||3).reduce((a,x)=>a+x[1], 0);
+  return mostra.map(([k,v])=>`${k}<span class="cq">${v}</span>`).join(' · ')
+       + (resto ? ` <span class="cq">+${resto}</span>` : '');
+}
 function cleanMod(s) { return String(s||'').replace(/^RENAULT\s*\/\s*/i,'').replace(/\n/g,'').trim(); }
 function diasPill(d) {
   const n = parseInt(d)||0;
@@ -1730,7 +1792,7 @@ function switchTab(i) {
   if(fg) fg.style.display = (i>=3) ? 'none' : '';
 }
 
-function renderAll() { renderFiltro('filtroGlobal',filtroP0,'setFiltroGlobal'); renderResumo(); renderPagos(); renderAlertas(); renderSlide(); if (window.atualizarResumoEstoque) window.atualizarResumoEstoque(); }
+function renderAll() { renderFiltro('filtroGlobal',filtroP0,'setFiltroGlobal'); renderFiltrosDetalhe(); renderResumo(); renderPagos(); renderAlertas(); renderSlide(); if (window.atualizarResumoEstoque) window.atualizarResumoEstoque(); }
 
 // ── FILTRO PRAÇA ─────────────────────────────────────────────────────────────
 function renderFiltro(containerId, ativo, onChange) {
@@ -1745,10 +1807,48 @@ function renderFiltro(containerId, ativo, onChange) {
 
 function setFiltroGlobal(p){filtroP0=filtroP1=filtroP2=p;renderFiltro('filtroGlobal',p,'setFiltroGlobal');renderAll();}
 
+/* as opções saem do próprio estoque carregado; modelo acompanha a família */
+function renderFiltrosDetalhe(){
+  const selF=document.getElementById('selFam'), selM=document.getElementById('selMod'), selA=document.getElementById('selAno');
+  if(!selF) return;
+  const base = filtroP0==='TODAS' ? allEstoque : allEstoque.filter(r=>r.praca===filtroP0);
+
+  const fams=[...new Set(base.map(r=>r.familia).filter(Boolean))].sort();
+  if(filtroFam!=='TODAS' && fams.indexOf(filtroFam)<0) filtroFam='TODAS';
+  selF.innerHTML='<option value="TODAS">Todas</option>'
+    + fams.map(f=>`<option value="${f}"${f===filtroFam?' selected':''}>${f}</option>`).join('');
+
+  const baseF = filtroFam==='TODAS' ? base : base.filter(r=>r.familia===filtroFam);
+  const mods=[...new Set(baseF.map(r=>r.modelo).filter(Boolean))].sort();
+  if(filtroMod!=='TODOS' && mods.indexOf(filtroMod)<0) filtroMod='TODOS';
+  selM.innerHTML='<option value="TODOS">Todos</option>'
+    + mods.map(m=>`<option value="${m}"${m===filtroMod?' selected':''}>${m}</option>`).join('');
+
+  const baseM = filtroMod==='TODOS' ? baseF : baseF.filter(r=>r.modelo===filtroMod);
+  const anos=[...new Set(baseM.map(r=>String(r.ano||'').trim()).filter(Boolean))].sort().reverse();
+  if(filtroAno!=='TODOS' && anos.indexOf(filtroAno)<0) filtroAno='TODOS';
+  selA.innerHTML='<option value="TODOS">Todos</option>'
+    + anos.map(a=>`<option value="${a}"${a===filtroAno?' selected':''}>${a}</option>`).join('');
+
+  const ativo = filtroFam!=='TODAS' || filtroMod!=='TODOS' || filtroAno!=='TODOS';
+  const conta=document.getElementById('filtroConta');
+  if(conta) conta.textContent = ativo
+    ? porPraca(filtroP0).length + ' de ' + base.length + ' veículos'
+    : (allEstoque.length ? allEstoque.length + ' veículos' : '');
+  const btn=document.getElementById('btnLimparFiltros');
+  if(btn) btn.style.opacity = ativo ? '1' : '.45';
+}
+function setFiltroFam(v){ filtroFam=v; filtroMod='TODOS'; filtroAno='TODOS'; renderAll(); }
+function setFiltroMod(v){ filtroMod=v; filtroAno='TODOS'; renderAll(); }
+function setFiltroAno(v){ filtroAno=v; renderAll(); }
+function limparFiltrosEstoque(){ filtroFam='TODAS'; filtroMod='TODOS'; filtroAno='TODOS'; renderAll(); }
+window.setFiltroFam=setFiltroFam; window.setFiltroMod=setFiltroMod;
+window.setFiltroAno=setFiltroAno; window.limparFiltrosEstoque=limparFiltrosEstoque;
+
 // ── TAB 0 — RESUMO GERAL ─────────────────────────────────────────────────────
 function renderResumo() {
 
-  const fil = filtroP0==='TODAS' ? allEstoque : allEstoque.filter(r=>r.praca===filtroP0);
+  const fil = porPraca(filtroP0);
 
   // KPIs
   const tot  = fil.length;
@@ -1772,21 +1872,29 @@ function renderResumo() {
   const ag = {};
   fil.forEach(r => {
     const k = `${r.praca}||${r.familia}||${r.modelo}`;
-    if (!ag[k]) ag[k] = { praca:r.praca, familia:r.familia, modelo:r.modelo, qtde:0, diasList:[], pagos:0, valor:0 };
+    if (!ag[k]) ag[k] = { praca:r.praca, familia:r.familia, modelo:r.modelo, qtde:0, diasList:[], pagos:0, valor:0,
+                          anos:{}, cores:{} };
     ag[k].qtde++;
     ag[k].diasList.push(r.dias);
     ag[k].valor += r.valor;
     if (r.pago==='Sim') ag[k].pagos++;
+    const ano = String(r.ano||'').trim() || '—';
+    const cor = String(r.cor||'').trim().toUpperCase() || '—';
+    ag[k].anos[ano] = (ag[k].anos[ano]||0) + 1;
+    ag[k].cores[cor] = (ag[k].cores[cor]||0) + 1;
   });
 
   const pracasU = [...new Set(fil.map(r=>r.praca))].sort();
   let html = `<table class="est-tbl"><colgroup>
     <col class="col-praca"><col class="col-fam"><col class="col-modelo">
+    <col class="col-ano"><col class="col-cor">
     <col class="col-qtd"><col class="col-pagos"><col class="col-dias">
   </colgroup><thead><tr>
     <th class="est-th left">PRAÇA</th>
     <th class="est-th left">FAMÍLIA</th>
     <th class="est-th left">MODELO</th>
+    <th class="est-th left">ANO</th>
+    <th class="est-th left">COR</th>
     <th class="est-th">QTD</th>
     <th class="est-th">PAGOS</th>
     <th class="est-th">DIAS MÉD</th>
@@ -1820,6 +1928,8 @@ function renderResumo() {
             <span style="font-size:.7rem;color:var(--muted);display:block">${fQ}un·${fPag}pg</span>
           </td>` : ''}
           <td class="est-td left" style="font-size:.82rem">${r.modelo}</td>
+          <td class="est-td left cel-ano">${listaContagem(r.anos,2)}</td>
+          <td class="est-td left cel-cor">${listaContagem(r.cores,3)}</td>
           <td class="est-td" style="font-weight:700;font-size:.95rem">${r.qtde}</td>
           <td class="est-td">${r.pagos > 0 ? `<span class="pago-pill">${r.pagos}</span>` : '—'}</td>
           <td class="est-td">${diasPill(dMed)}</td>
@@ -1830,7 +1940,7 @@ function renderResumo() {
     const pMed = pD.length ? Math.round(pD.reduce((a,b)=>a+b,0)/pD.length) : 0;
     const pMax = pD.length ? Math.max(...pD) : 0;
     html += `<tr class="tot-row">
-      <td class="est-td left" colspan="3" style="color:${corP}">▸ TOTAL ${praca}</td>
+      <td class="est-td left" colspan="5" style="color:${corP}">▸ TOTAL ${praca}</td>
       <td class="est-td" style="color:${corP};font-size:.95rem;font-weight:700">${pQ}</td>
       <td class="est-td" style="color:var(--pink)">${pPag}</td>
       <td class="est-td">${diasPill(pMed)}</td>
@@ -1839,7 +1949,7 @@ function renderResumo() {
 
   const gMed = gD.length ? Math.round(gD.reduce((a,b)=>a+b,0)/gD.length) : 0;
   html += `<tr class="tot-row">
-    <td class="est-td left" colspan="3" style="color:var(--accent);font-size:.9rem">◆ TOTAL EUROVIA</td>
+    <td class="est-td left" colspan="5" style="color:var(--accent);font-size:.9rem">◆ TOTAL EUROVIA</td>
     <td class="est-td" style="color:var(--accent);font-size:1.1rem;font-weight:700">${gQ}</td>
     <td class="est-td" style="color:var(--pink)">${gPag}</td>
     <td class="est-td">${diasPill(gMed)}</td>
@@ -1852,7 +1962,7 @@ function renderResumo() {
 // ── TAB 1 — PAGOS ────────────────────────────────────────────────────────────
 function renderPagos() {
 
-  const base  = filtroP1==='TODAS' ? allEstoque : allEstoque.filter(r=>r.praca===filtroP1);
+  const base  = porPraca(filtroP1);
   const pagos = base.filter(r => r.pago==='Sim').sort((a,b)=>b.dias-a.dias);
 
   document.getElementById('pagosSec').innerHTML = `<span style="display:flex;align-items:center;gap:8px"><span style="width:3px;height:12px;background:var(--amarelo);border-radius:1px"></span>Veículos Pagos (${pagos.length})</span>`;
@@ -1933,7 +2043,7 @@ function renderPagos() {
 // ── TAB 2 — ALERTAS ──────────────────────────────────────────────────────────
 function renderAlertas() {
 
-  const base = filtroP2==='TODAS' ? allEstoque : allEstoque.filter(r=>r.praca===filtroP2);
+  const base = porPraca(filtroP2);
   const alertas = base.filter(r => r.dias > 150);
 
   // Ordenação clicável
@@ -2790,7 +2900,12 @@ iniciarDrive();
 const SHEET_ID="1-lk4MMYRoh0v9OCDge_3FKdHxvco93YG_B1f5QHvuHw";
 // ID de publicação (Arquivo > Publicar na web). Usado para leitura estável via /pub.
 const PUB_ID="2PACX-1vQWcKqY20ynXrv_STHhRS2JCRPm7jaYSEE2wslQabSk8IJoxAYVhM0Eoifb1-TNaXsMkOj9KionjjeR";
-const LOJAS=["Afogados","Imbiribeira","Olinda","Piedade","Epitacio","Cabedelo","Iguatemi","Lauro"];
+const LOJAS_OFI_TODAS=["Afogados","Imbiribeira","Olinda","Piedade","Epitacio","Cabedelo","Iguatemi","Lauro"];
+/* Cabedelo fechou: sai do painel a partir de outubro/2026. Os meses anteriores
+   continuam com ela, para consulta. */
+const FECHADAS_OFI={Cabedelo:'2026-10'};
+const lojasOfiDoMes=ym=>LOJAS_OFI_TODAS.filter(l=>!(FECHADAS_OFI[l] && ym>=FECHADAS_OFI[l]));
+let LOJAS=lojasOfiDoMes('2026-08');
 const GID={
   Afogados:"753342613", Imbiribeira:"101458476", Olinda:"569013249", Piedade:"1123546805",
   Epitacio:"1335904896", Cabedelo:"1865932396", Iguatemi:"2138172232", Lauro:"1039487285"
@@ -2947,7 +3062,7 @@ async function carregar(){
   const carimbo=agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('lastUpdate').textContent=carimbo;
   if(falhas.length) setStatusOfi('ok','Carregado com avisos em: '+falhas.join(', '));
-  else setStatusOfi('ok','Todas as 8 lojas lidas com sucesso');
+  else setStatusOfi('ok','Todas as '+LOJAS.length+' lojas lidas com sucesso');
   selLojas.clear();
   fillLojas();fillDias();refresh();
 }
@@ -3329,6 +3444,7 @@ function ofiRemoverMes(ym){
 function ofiTrocarMes(ym){
   if(!mesesOfi.some(m => m.ym === ym)) return;
   mesOfi = ym;
+  LOJAS = lojasOfiDoMes(ym);
   guardarMeses();
   desenharMesesOfi();
   carregar();
@@ -3356,6 +3472,7 @@ window.ofiRemoverMes   = ofiRemoverMes;
 window.ofiTrocarMes    = ofiTrocarMes;
 
 recuperarMeses();
+LOJAS = lojasOfiDoMes(mesOfi);
 opcoesMesNovo();
 desenharMesesOfi();
 marcarTravaOfi();
@@ -7047,7 +7164,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v26 · 06/10';
+const VERSAO = 'v27 · 16/10';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
