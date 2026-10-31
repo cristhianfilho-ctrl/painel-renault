@@ -3247,7 +3247,9 @@ const MES_OFI_BASE = {ym:'2026-08', rot:'Agosto 2026', tipo:'embutida', chave:''
 const MESES_OFI_FIXOS = [
   MES_OFI_BASE,
   {ym:'2026-09', rot:'Setembro 2026', tipo:'id', fixo:true,
-   chave:'1b0V9I1G-n43xhnqre0v807esSrL47mu9_JBL8fm2zas'}   /* Oficina Renault - Setembro.26 */
+   chave:'1b0V9I1G-n43xhnqre0v807esSrL47mu9_JBL8fm2zas'},  /* Oficina Renault - Setembro.26 */
+  {ym:'2026-11', rot:'Novembro 2026', tipo:'id', fixo:true,
+   chave:'1UxpELIs6V34bhiaDEyCBsdnvqBEA1T3YsN4eIk-5zIE'}   /* Oficina Renault - Novembro.26 */
 ];
 const NOMES_MES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto',
                    'Setembro','Outubro','Novembro','Dezembro'];
@@ -7164,7 +7166,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v27 · 16/10';
+const VERSAO = 'v28 · 28/10';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
