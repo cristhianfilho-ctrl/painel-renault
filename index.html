@@ -2981,7 +2981,9 @@ async function carregar(){
   const mes=(typeof mesOfiAtual==='function') ? mesOfiAtual() : {tipo:'embutida'};
   setStatusOfi('load','Carregando '+(mes.rot||'')+'…');
   const clientes=[];
-  const falhas=[];
+  const falhas=[];        /* deu erro de verdade */
+  const vazias=[];        /* aba existe, mas sem nenhuma linha */
+  const semData=[];       /* tem linhas, nenhuma com data válida */
   let naoPublica=false;
 
   /* mês cadastrado na aba Ajustes: baixa a planilha inteira de uma vez e
@@ -3004,7 +3006,7 @@ async function carregar(){
       const rows = abas
         ? (abas[normAba(loja)] || (()=>{ throw new Error('aba não encontrada'); })())
         : parseCSV(await lerAba(loja));
-      if(rows.length<2) continue;
+      if(rows.length<2){ vazias.push(loja); continue; }
       const norm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       const head=rows[0].map(norm);
       const findCol=(...keys)=>{
@@ -3023,6 +3025,7 @@ async function carregar(){
         iData=1;iHora=2;iCli=3;iPlaca=4;iVeic=5;iRev=6;iTel=7;iAval=8;iValor=9;iModelo=10;iVend=11;
         usouFallback=true;
       }
+      const antes=clientes.length;
       for(let r=0;r<rows.length;r++){
         const row=rows[r];
         const dataBr=row[iData]; if(!dataBr)continue;
@@ -3041,6 +3044,7 @@ async function carregar(){
           vend:sim(row[iVend])
         });
       }
+      if(clientes.length===antes) semData.push(loja);
     }catch(e){
       if(String(e.message)==='NAO_PUBLICA') naoPublica=true;
       falhas.push(loja+' ('+(e.message==='NAO_PUBLICA'?'sem acesso público':e.message)+')');
@@ -3049,12 +3053,25 @@ async function carregar(){
   }
 
   if(!clientes.length){
+    /* limpa a tela: sem isso, os números do mês anterior continuariam
+       aparecendo embaixo do nome do mês novo */
+    DATA={por_loja:[],clientes:[]};
+    selLojas.clear(); fillLojas(); fillDias(); refresh();
+    document.getElementById('lastUpdate').textContent='—';
+
+    const nome=mes.rot||'este mês';
     if(naoPublica){
       setStatusOfi('err','A planilha respondeu, mas sem acesso público. Em Compartilhar, confirme "Qualquer pessoa com o link" como Leitor — e que é a planilha certa (ID no rodapé).');
+    }else if(falhas.length){
+      setStatusOfi('err','Não consegui ler estas abas: '+falhas.join(', ')
+        +'. Confira se os nomes batem com os das lojas.');
+    }else if(semData.length){
+      setStatusOfi('err','A planilha de '+nome+' abriu, mas nenhuma linha tinha data válida em '
+        +semData.join(', ')+'. Confira se a coluna Data está preenchida no formato dd/mm/aaaa.');
     }else{
-      setStatusOfi('err','Não consegui ler nenhum dado. Abas com problema: '+falhas.join(', '));
+      setStatusOfi('','A planilha de '+nome+' abriu certinho, mas ainda está sem lançamentos. '
+        +'Cole o ROF037 nas abas das lojas e clique em Atualizar agora.');
     }
-    document.getElementById('lastUpdate').textContent='—';
     return;
   }
   DATA=consolidar(clientes);
@@ -3062,6 +3079,8 @@ async function carregar(){
   const carimbo=agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('lastUpdate').textContent=carimbo;
   if(falhas.length) setStatusOfi('ok','Carregado com avisos em: '+falhas.join(', '));
+  else if(vazias.length || semData.length)
+    setStatusOfi('ok','Carregado · ainda sem lançamentos em: '+vazias.concat(semData).join(', '));
   else setStatusOfi('ok','Todas as '+LOJAS.length+' lojas lidas com sucesso');
   selLojas.clear();
   fillLojas();fillDias();refresh();
@@ -3735,7 +3754,7 @@ function aplicarLojasDoMes(ym){
   LOJAS=lojasDoMes(ym);
   NOMES=LOJAS.map(l=>l.nome);
 }
-const MODELOS=['BOREAL','KARDIAN','DUSTER','KOLEOS','OROCH','KWID'];
+const MODELOS=['BOREAL','KARDIAN','DUSTER','KOLEOS','NIAGARA','OROCH','KWID'];
 const COM_META=['BOREAL','KARDIAN','DUSTER'];
 
 /* As semanas do painel vão de segunda a sábado; domingo não conta e o que
@@ -3776,7 +3795,8 @@ const chave=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCa
 const MAPA_LOJA={}; LOJAS_TODAS.forEach(l=>MAPA_LOJA[chave(l.nome)]=l.nome);
 Object.assign(MAPA_LOJA,{epitacio:'EPITÁCIO',avepitacio:'EPITÁCIO',laurodefreitas:'LAURO'});
 const MAPA_MODELO={}; MODELOS.forEach(m=>MAPA_MODELO[chave(m)]=m);
-Object.assign(MAPA_MODELO,{kwidd:'KWID',dusters:'DUSTER',duste:'DUSTER',koleoss:'KOLEOS'});
+Object.assign(MAPA_MODELO,{kwidd:'KWID',dusters:'DUSTER',duste:'DUSTER',koleoss:'KOLEOS',
+  niagar:'NIAGARA',niagaras:'NIAGARA',niagra:'NIAGARA'});
 
 const zeros=()=>{const o={};MODELOS.forEach(m=>o[m]=0);return o;};
 const porLoja=()=>{const o={};NOMES.forEach(n=>o[n]=zeros());return o;};
@@ -4209,7 +4229,7 @@ const COLUNAS=[
   {k:'bMeta',rot:'Meta'},{k:'bVol',rot:'Vol'},{k:'bPct',rot:'%'},
   {k:'kMeta',rot:'Meta'},{k:'kVol',rot:'Vol'},{k:'kPct',rot:'%'},
   {k:'dMeta',rot:'Meta'},{k:'dVol',rot:'Vol'},{k:'dPct',rot:'%'},
-  {k:'KOLEOS',rot:'Koleos'},{k:'OROCH',rot:'Oroch'},{k:'KWID',rot:'Kwid'},
+  {k:'KOLEOS',rot:'Koleos'},{k:'NIAGARA',rot:'Niagara'},{k:'OROCH',rot:'Oroch'},{k:'KWID',rot:'Kwid'},
   {k:'total',rot:'Total vendas'},{k:'pctMeta',rot:'% meta'},
   {k:'falta',rot:'À realizar'},{k:'diaria',rot:'Meta diária'},{k:'margem',rot:'Margem'}];
 
@@ -4222,7 +4242,7 @@ function linhasAcomp(){
       bMeta:mm('BOREAL'),bVol:t[n].BOREAL,bPct:pct(t[n].BOREAL,mm('BOREAL')),
       kMeta:mm('KARDIAN'),kVol:t[n].KARDIAN,kPct:pct(t[n].KARDIAN,mm('KARDIAN')),
       dMeta:mm('DUSTER'),dVol:t[n].DUSTER,dPct:pct(t[n].DUSTER,mm('DUSTER')),
-      KOLEOS:t[n].KOLEOS,OROCH:t[n].OROCH,KWID:t[n].KWID,
+      KOLEOS:t[n].KOLEOS,NIAGARA:t[n].NIAGARA,OROCH:t[n].OROCH,KWID:t[n].KWID,
       total,pctMeta:pct(total,meta),falta,diaria:falta/d,margem:margemMedia(n)};
   });
 }
@@ -4252,7 +4272,7 @@ function desenharAcompanhamento(){
       <td>${r.bMeta}</td><td class="${r.bVol?'':'zero'}">${r.bVol}</td><td class="${r.bMeta?classeComp(r.bPct,regua.b):''}">${r.bMeta?fmtPct(r.bPct):'—'}</td>
       <td>${r.kMeta}</td><td class="${r.kVol?'':'zero'}">${r.kVol}</td><td class="${r.kMeta?classeComp(r.kPct,regua.k):''}">${r.kMeta?fmtPct(r.kPct):'—'}</td>
       <td>${r.dMeta}</td><td class="${r.dVol?'':'zero'}">${r.dVol}</td><td class="${r.dMeta?classeComp(r.dPct,regua.d):''}">${r.dMeta?fmtPct(r.dPct):'—'}</td>
-      <td class="${r.KOLEOS?'':'zero'}">${r.KOLEOS}</td><td class="${r.OROCH?'':'zero'}">${r.OROCH}</td><td class="${r.KWID?'':'zero'}">${r.KWID}</td>
+      <td class="${r.KOLEOS?'':'zero'}">${r.KOLEOS}</td><td class="${r.NIAGARA?'':'zero'}">${r.NIAGARA}</td><td class="${r.OROCH?'':'zero'}">${r.OROCH}</td><td class="${r.KWID?'':'zero'}">${r.KWID}</td>
       <td class="forte">${r.total}</td><td class="forte ${classeComp(r.pctMeta,regua.meta)}">${fmtPct(r.pctMeta)}</td>
       <td>${r.falta}</td><td>${r.diaria.toFixed(1)}</td><td>${fmtReal(r.margem)}</td></tr>`;
   });
@@ -4261,7 +4281,7 @@ function desenharAcompanhamento(){
     <thead>
       <tr><th rowspan="2" ${cab('loja')}>Loja</th><th rowspan="2" ${cab('meta')}>Meta<br>vendas</th>
         <th colspan="3">Boreal</th><th colspan="3">Kardian</th><th colspan="3">Duster</th>
-        <th rowspan="2" ${cab('KOLEOS')}>Koleos</th><th rowspan="2" ${cab('OROCH')}>Oroch</th><th rowspan="2" ${cab('KWID')}>Kwid</th>
+        <th rowspan="2" ${cab('KOLEOS')}>Koleos</th><th rowspan="2" ${cab('NIAGARA')}>Niagara</th><th rowspan="2" ${cab('OROCH')}>Oroch</th><th rowspan="2" ${cab('KWID')}>Kwid</th>
         <th rowspan="2" ${cab('total')}>Total<br>vendas</th><th rowspan="2" ${cab('pctMeta')}>% meta</th>
         <th rowspan="2" ${cab('falta')}>À rea-<br>lizar</th><th rowspan="2" ${cab('diaria')}>Meta<br>diária</th><th rowspan="2" ${cab('margem')}>Margem</th></tr>
       <tr class="sub"><th ${cab('bMeta')}>Meta</th><th ${cab('bVol')}>Vol</th><th ${cab('bPct')}>%</th>
@@ -4273,7 +4293,7 @@ function desenharAcompanhamento(){
       <td>${sm('bMeta')}</td><td>${sm('bVol')}</td><td class="destaque">${fmtPct(regua.b)}</td>
       <td>${sm('kMeta')}</td><td>${sm('kVol')}</td><td class="destaque">${fmtPct(regua.k)}</td>
       <td>${sm('dMeta')}</td><td>${sm('dVol')}</td><td class="destaque">${fmtPct(regua.d)}</td>
-      <td>${sm('KOLEOS')}</td><td>${sm('OROCH')}</td><td>${sm('KWID')}</td>
+      <td>${sm('KOLEOS')}</td><td>${sm('NIAGARA')}</td><td>${sm('OROCH')}</td><td>${sm('KWID')}</td>
       <td>${totG}</td><td class="destaque">${fmtPct(regua.meta)}</td><td>${metaG-totG}</td>
       <td>${((metaG-totG)/d).toFixed(1)}</td><td>${fmtReal(margemGrupo())}</td></tr></tfoot>
   </table>`;
@@ -4360,7 +4380,7 @@ const COLUNAS_FECH=[
   {k:'bMeta',rot:'Meta'},{k:'bVol',rot:'Vol'},{k:'bPct',rot:'%'},
   {k:'kMeta',rot:'Meta'},{k:'kVol',rot:'Vol'},{k:'kPct',rot:'%'},
   {k:'dMeta',rot:'Meta'},{k:'dVol',rot:'Vol'},{k:'dPct',rot:'%'},
-  {k:'KOLEOS',rot:'Koleos'},{k:'OROCH',rot:'Oroch'},{k:'KWID',rot:'Kwid'},
+  {k:'KOLEOS',rot:'Koleos'},{k:'NIAGARA',rot:'Niagara'},{k:'OROCH',rot:'Oroch'},{k:'KWID',rot:'Kwid'},
   {k:'sem',rot:'S/ modelo'},
   {k:'total',rot:'Total faturado'},{k:'pctMeta',rot:'% meta'},{k:'margem',rot:'Margem'}];
 
@@ -4380,7 +4400,7 @@ function linhasFech(){
       bMeta:mm('BOREAL'),bVol:mo.BOREAL,bPct:pct(mo.BOREAL,mm('BOREAL')),
       kMeta:mm('KARDIAN'),kVol:mo.KARDIAN,kPct:pct(mo.KARDIAN,mm('KARDIAN')),
       dMeta:mm('DUSTER'),dVol:mo.DUSTER,dPct:pct(mo.DUSTER,mm('DUSTER')),
-      KOLEOS:mo.KOLEOS,OROCH:mo.OROCH,KWID:mo.KWID,sem:mo[SEM_MODELO]||0,
+      KOLEOS:mo.KOLEOS,NIAGARA:mo.NIAGARA,OROCH:mo.OROCH,KWID:mo.KWID,sem:mo[SEM_MODELO]||0,
       total,pctMeta:pct(total,meta),margem:margemMedia(n)};
   });
 }
@@ -4411,7 +4431,7 @@ function desenharFechamento(){
       <td>${r.bMeta}</td><td class="${r.bVol?'':'zero'}">${r.bVol}</td><td class="${r.bMeta?classeComp(r.bPct,regua.b):''}">${r.bMeta?fmtPct(r.bPct):'—'}</td>
       <td>${r.kMeta}</td><td class="${r.kVol?'':'zero'}">${r.kVol}</td><td class="${r.kMeta?classeComp(r.kPct,regua.k):''}">${r.kMeta?fmtPct(r.kPct):'—'}</td>
       <td>${r.dMeta}</td><td class="${r.dVol?'':'zero'}">${r.dVol}</td><td class="${r.dMeta?classeComp(r.dPct,regua.d):''}">${r.dMeta?fmtPct(r.dPct):'—'}</td>
-      <td class="${r.KOLEOS?'':'zero'}">${r.KOLEOS}</td><td class="${r.OROCH?'':'zero'}">${r.OROCH}</td><td class="${r.KWID?'':'zero'}">${r.KWID}</td>
+      <td class="${r.KOLEOS?'':'zero'}">${r.KOLEOS}</td><td class="${r.NIAGARA?'':'zero'}">${r.NIAGARA}</td><td class="${r.OROCH?'':'zero'}">${r.OROCH}</td><td class="${r.KWID?'':'zero'}">${r.KWID}</td>
       ${temSem?`<td class="${r.sem?'':'zero'}">${r.sem}</td>`:''}
       <td class="forte">${r.total}</td><td class="forte ${classeComp(r.pctMeta,regua.meta)}">${fmtPct(r.pctMeta)}</td>
       <td>${fmtReal(r.margem)}</td></tr>`;
@@ -4421,7 +4441,7 @@ function desenharFechamento(){
     <thead>
       <tr><th rowspan="2" ${cab('loja')}>Loja</th><th rowspan="2" ${cab('meta')}>Meta<br>vendas</th>
         <th colspan="3">Boreal</th><th colspan="3">Kardian</th><th colspan="3">Duster</th>
-        <th rowspan="2" ${cab('KOLEOS')}>Koleos</th><th rowspan="2" ${cab('OROCH')}>Oroch</th><th rowspan="2" ${cab('KWID')}>Kwid</th>
+        <th rowspan="2" ${cab('KOLEOS')}>Koleos</th><th rowspan="2" ${cab('NIAGARA')}>Niagara</th><th rowspan="2" ${cab('OROCH')}>Oroch</th><th rowspan="2" ${cab('KWID')}>Kwid</th>
         ${temSem?`<th rowspan="2" ${cab('sem')}>S/ mo-<br>delo</th>`:''}
         <th rowspan="2" ${cab('total')}>Total<br>faturado</th><th rowspan="2" ${cab('pctMeta')}>% meta</th>
         <th rowspan="2" ${cab('margem')}>Margem</th></tr>
@@ -4434,7 +4454,7 @@ function desenharFechamento(){
       <td>${sm('bMeta')}</td><td>${sm('bVol')}</td><td class="destaque">${fmtPct(regua.b)}</td>
       <td>${sm('kMeta')}</td><td>${sm('kVol')}</td><td class="destaque">${fmtPct(regua.k)}</td>
       <td>${sm('dMeta')}</td><td>${sm('dVol')}</td><td class="destaque">${fmtPct(regua.d)}</td>
-      <td>${sm('KOLEOS')}</td><td>${sm('OROCH')}</td><td>${sm('KWID')}</td>
+      <td>${sm('KOLEOS')}</td><td>${sm('NIAGARA')}</td><td>${sm('OROCH')}</td><td>${sm('KWID')}</td>
       ${temSem?`<td>${sm('sem')}</td>`:''}
       <td>${totG}</td><td class="destaque">${fmtPct(regua.meta)}</td>
       <td>${fmtReal(margemGrupo())}</td></tr></tfoot>
@@ -4476,7 +4496,7 @@ function slideFechamento(ctx,W,H){
     {sup:'Boreal',rot:'Meta'},{sup:'Boreal',rot:'Vol'},{sup:'Boreal',rot:'%'},
     {sup:'Kardian',rot:'Meta'},{sup:'Kardian',rot:'Vol'},{sup:'Kardian',rot:'%'},
     {sup:'Duster',rot:'Meta'},{sup:'Duster',rot:'Vol'},{sup:'Duster',rot:'%'},
-    {rot:'Koleos'},{rot:'Oroch'},{rot:'Kwid'}]
+    {rot:'Koleos'},{rot:'Niagara'},{rot:'Oroch'},{rot:'Kwid'}]
     .concat(temSem?[{rot:'S/ modelo'}]:[])
     .concat([{rot:'Faturado',destaque:true},{rot:'% Meta',destaque:true},{rot:'Margem'}]);
 
@@ -4484,7 +4504,7 @@ function slideFechamento(ctx,W,H){
     {t:String(r.bMeta)},{t:String(r.bVol),cor:r.bVol?null:'grade'},{t:r.bMeta?fmtPct(r.bPct):'—',cor:r.bMeta?cor(r.bPct,regua.b):null},
     {t:String(r.kMeta)},{t:String(r.kVol),cor:r.kVol?null:'grade'},{t:r.kMeta?fmtPct(r.kPct):'—',cor:r.kMeta?cor(r.kPct,regua.k):null},
     {t:String(r.dMeta)},{t:String(r.dVol),cor:r.dVol?null:'grade'},{t:r.dMeta?fmtPct(r.dPct):'—',cor:r.dMeta?cor(r.dPct,regua.d):null},
-    {t:String(r.KOLEOS),cor:r.KOLEOS?null:'grade'},{t:String(r.OROCH),cor:r.OROCH?null:'grade'},{t:String(r.KWID),cor:r.KWID?null:'grade'}]
+    {t:String(r.KOLEOS),cor:r.KOLEOS?null:'grade'},{t:String(r.NIAGARA),cor:r.NIAGARA?null:'grade'},{t:String(r.OROCH),cor:r.OROCH?null:'grade'},{t:String(r.KWID),cor:r.KWID?null:'grade'}]
     .concat(temSem?[{t:String(r.sem),cor:r.sem?null:'grade'}]:[])
     .concat([{t:String(r.total),forte:true},{t:fmtPct(r.pctMeta),forte:true,cor:cor(r.pctMeta,regua.meta)},
              {t:fmtReal(r.margem)}]));
@@ -4493,7 +4513,7 @@ function slideFechamento(ctx,W,H){
     {t:String(sm('bMeta'))},{t:String(sm('bVol'))},{t:fmtPct(regua.b),cor:'amarelo'},
     {t:String(sm('kMeta'))},{t:String(sm('kVol'))},{t:fmtPct(regua.k),cor:'amarelo'},
     {t:String(sm('dMeta'))},{t:String(sm('dVol'))},{t:fmtPct(regua.d),cor:'amarelo'},
-    {t:String(sm('KOLEOS'))},{t:String(sm('OROCH'))},{t:String(sm('KWID'))}]
+    {t:String(sm('KOLEOS'))},{t:String(sm('NIAGARA'))},{t:String(sm('OROCH'))},{t:String(sm('KWID'))}]
     .concat(temSem?[{t:String(sm('sem'))}]:[])
     .concat([{t:String(sm('total')),forte:true},{t:fmtPct(regua.meta),forte:true,cor:'amarelo'},
              {t:fmtReal(margemGrupo())}]);
@@ -5240,21 +5260,21 @@ function slideAcompanhamento(ctx,W,H){
     {sup:'Boreal',rot:'Meta'},{sup:'Boreal',rot:'Vol'},{sup:'Boreal',rot:'%'},
     {sup:'Kardian',rot:'Meta'},{sup:'Kardian',rot:'Vol'},{sup:'Kardian',rot:'%'},
     {sup:'Duster',rot:'Meta'},{sup:'Duster',rot:'Vol'},{sup:'Duster',rot:'%'},
-    {rot:'Koleos'},{rot:'Oroch'},{rot:'Kwid'},
+    {rot:'Koleos'},{rot:'Niagara'},{rot:'Oroch'},{rot:'Kwid'},
     {rot:'Total',destaque:true},{rot:'% Meta',destaque:true},
     {rot:'À realizar'},{rot:'Meta dia'},{rot:'Margem'}];
   const linhas=ordenadas.map(r=>[{t:r.loja,forte:true},{t:String(r.meta),forte:true},
     {t:String(r.bMeta)},{t:String(r.bVol),cor:r.bVol?null:'grade'},{t:r.bMeta?fmtPct(r.bPct):'—',cor:r.bMeta?cor(r.bPct,regua.b):null},
     {t:String(r.kMeta)},{t:String(r.kVol),cor:r.kVol?null:'grade'},{t:r.kMeta?fmtPct(r.kPct):'—',cor:r.kMeta?cor(r.kPct,regua.k):null},
     {t:String(r.dMeta)},{t:String(r.dVol),cor:r.dVol?null:'grade'},{t:r.dMeta?fmtPct(r.dPct):'—',cor:r.dMeta?cor(r.dPct,regua.d):null},
-    {t:String(r.KOLEOS),cor:r.KOLEOS?null:'grade'},{t:String(r.OROCH),cor:r.OROCH?null:'grade'},{t:String(r.KWID),cor:r.KWID?null:'grade'},
+    {t:String(r.KOLEOS),cor:r.KOLEOS?null:'grade'},{t:String(r.NIAGARA),cor:r.NIAGARA?null:'grade'},{t:String(r.OROCH),cor:r.OROCH?null:'grade'},{t:String(r.KWID),cor:r.KWID?null:'grade'},
     {t:String(r.total),forte:true},{t:fmtPct(r.pctMeta),forte:true,cor:cor(r.pctMeta,regua.meta)},
     {t:String(r.falta)},{t:r.diaria.toFixed(1)},{t:fmtReal(r.margem)}]);
   const rod=[{t:'EUROVIA',forte:true},{t:String(sm('meta')),forte:true},
     {t:String(sm('bMeta'))},{t:String(sm('bVol'))},{t:fmtPct(regua.b),cor:'amarelo'},
     {t:String(sm('kMeta'))},{t:String(sm('kVol'))},{t:fmtPct(regua.k),cor:'amarelo'},
     {t:String(sm('dMeta'))},{t:String(sm('dVol'))},{t:fmtPct(regua.d),cor:'amarelo'},
-    {t:String(sm('KOLEOS'))},{t:String(sm('OROCH'))},{t:String(sm('KWID'))},
+    {t:String(sm('KOLEOS'))},{t:String(sm('NIAGARA'))},{t:String(sm('OROCH'))},{t:String(sm('KWID'))},
     {t:String(sm('total')),forte:true},{t:fmtPct(regua.meta),forte:true,cor:'amarelo'},
     {t:String(sm('meta')-sm('total'))},{t:((sm('meta')-sm('total'))/d).toFixed(1)},{t:fmtReal(margemGrupo())}];
   desenharTabelaSlide(ctx,area,cols,linhas,rod);
@@ -7166,7 +7186,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v28 · 28/10';
+const VERSAO = 'v30 · 04/11';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
