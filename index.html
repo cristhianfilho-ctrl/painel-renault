@@ -6479,7 +6479,13 @@ const LINHAS = [
   {campo:'eleg',    achar:['CLIENTES ELEGIVEIS'],                 tipo:'num'},
   {campo:'erep',    achar:['E-REPUTATION','E REPUTATION','EREPUTATION'], tipo:'num'},
   {campo:'gmb',     achar:['NOTA ESTRELA GMB','ESTRELA GMB'],     tipo:'num'},
-  {campo:'resp',    achar:['TAXA DE RESPOSTA'],                   tipo:'num'}
+  {campo:'resp',    achar:['TAXA DE RESPOSTA'],                   tipo:'num'},
+  /* Reclame Aqui VN — a planilha traz o rótulo do grupo numa coluna e o da
+     linha na seguinte. "NAO RESPONDIDOS" vem antes de "RESPONDIDOS" porque a
+     busca é por trecho e um contém o outro. */
+  {campo:'raNao',   achar:['NAO RESPONDIDOS'],                    tipo:'num'},
+  {campo:'raResp',  achar:['RESPONDIDOS'],                        tipo:'num'},
+  {campo:'raRec',   achar:['RECEBIDOS'],                          tipo:'num'}
 ];
 
 let meses = [];            // [{nome, titulo, lojas:[...]}]
@@ -6548,12 +6554,15 @@ function interpretarGrade(grade){
   let indicadores = 0;
   for(let i = iCab + 1; i < grade.length; i++){
     const linha = grade[i] || [];
-    let rot = '';
+    /* olha todas as primeiras colunas: em "RECLAME AQUI VN | RECEBIDOS" o
+       rótulo que interessa é o segundo */
+    const rots = [];
     for(let j = 0; j < linha.length && j < 3; j++){
-      if(String(linha[j]||'').trim()){ rot = norm(linha[j]); break; }
+      const v = String(linha[j]||'').trim();
+      if(v) rots.push(norm(v));
     }
-    if(!rot) continue;
-    const def = LINHAS.find(d => d.achar.some(a => rot.includes(a)));
+    if(!rots.length) continue;
+    const def = LINHAS.find(x => x.achar.some(a => rots.some(r => r.includes(a))));
     if(!def) continue;
     indicadores++;
     Object.keys(colunas).forEach(l => {
@@ -6591,8 +6600,12 @@ function totais(lista){
     return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null;
   };
   const soma = campo => lojas.reduce((a,r) => a + (typeof r[campo] === 'number' ? r[campo] : 0), 0);
+  const temRA = lojas.some(r => typeof r.raRec === 'number' || typeof r.raResp === 'number' || typeof r.raNao === 'number');
   return { loja:'EUROVIA', vocMes:media('vocMes'), voc3m:media('voc3m'), retorno:media('retorno'),
-           pesq:soma('pesq'), eleg:soma('eleg'), erep:media('erep'), gmb:media('gmb'), resp:media('resp') };
+           pesq:soma('pesq'), eleg:soma('eleg'), erep:media('erep'), gmb:media('gmb'), resp:media('resp'),
+           raRec: temRA ? soma('raRec') : null,
+           raResp: temRA ? soma('raResp') : null,
+           raNao: temRA ? soma('raNao') : null };
 }
 
 // ── formatação ───────────────────────────────────────────────────────────────
@@ -6615,6 +6628,20 @@ const IND = [
   {campo:'gmb',     rot:'Nota estrela GMB',      fmt:f2,   cor:v => classeMin(v,OBJ.gmb),     alvo:'≥ ' + f1(OBJ.gmb)},
   {campo:'resp',    rot:'Taxa de resposta GMB',  fmt:fPct, cor:v => classeMin(v,OBJ.resp),    alvo:OBJ.resp + '%'}
 ];
+/* Reclame Aqui VN — entra a partir da aba que trouxer essas linhas
+   (novembro/26 em diante); nos meses anteriores nem aparece. */
+const IND_RA = [
+  {campo:'raRec',  rot:'Reclame Aqui · recebidos',       fmt:fInt, cor:() => '',    alvo:'—', ra:1},
+  {campo:'raResp', rot:'Reclame Aqui · respondidos',     fmt:fInt, cor:() => '',    alvo:'—', ra:1},
+  {campo:'raNao',  rot:'Reclame Aqui · não respondidos', fmt:fInt, alvo:'0', ra:1,
+   cor:v => (v === null || v === undefined) ? 'dim' : (v > 0 ? 'v-down' : 'v-up')}
+];
+/* a planilha do mês tem Reclame Aqui? */
+function temReclameAqui(){
+  return dadosMes().some(r => typeof r.raRec === 'number'
+    || typeof r.raResp === 'number' || typeof r.raNao === 'number');
+}
+const indicadoresDoMes = () => temReclameAqui() ? IND.concat(IND_RA) : IND;
 
 // ── seletor de mês ───────────────────────────────────────────────────────────
 function desenharSeletor(){
@@ -6649,7 +6676,11 @@ function desenharKpis(){
     cartao('Pesquisas respondidas', fInt(T.pesq), fInt(T.eleg) + ' elegíveis'),
     cartao('e-Reputation', f1(T.erep), 'média das lojas'),
     cartao('Nota GMB', f2(T.gmb), 'objetivo ≥ ' + f1(OBJ.gmb), classeMin(T.gmb,OBJ.gmb))
-  ].join('');
+  ].concat(temReclameAqui() ? [
+    cartao('Reclame Aqui', fInt(T.raRec),
+      fInt(T.raResp) + ' respondidos · ' + fInt(T.raNao) + ' em aberto',
+      T.raNao > 0 ? 'v-down' : (T.raRec > 0 ? 'v-up' : ''))
+  ] : []).join('');
 }
 
 // ── tabela da tela: mesmo formato da planilha e do slide ────────────────────
@@ -6681,7 +6712,7 @@ function desenharTabela(){
     + lojas.map(r => `<th class="r">${ROTULO[r.loja] || r.loja}</th>`).join('')
     + '<th class="r active">EUROVIA</th></tr>';
 
-  const corpo = IND.map(ind => {
+  const corpo = indicadoresDoMes().map(ind => {
     const cels = lojas.map(r => {
       const v = r[ind.campo];
       return `<td class="r ${ind.cor(v)}">${ind.fmt(v)}</td>`;
@@ -6886,7 +6917,7 @@ function qualDesenharSlide(){
     .concat(lojas.map(r => ({rot:ROTULO[r.loja] || r.loja, mono:true})))
     .concat([{rot:'EUROVIA', mono:true}]);
 
-  const linhas = IND.map(ind => {
+  const linhas = indicadoresDoMes().map(ind => {
     const cel = [{t:ind.rot, forte:true}];
     lojas.forEach(r => {
       const v = r[ind.campo];
@@ -6898,7 +6929,7 @@ function qualDesenharSlide(){
   });
 
   const fim = tabelaOficina(ctx, area, cols, linhas, null);
-  desenharVozNoSlide(ctx, area, fim);
+  if(!temReclameAqui()) desenharVozNoSlide(ctx, area, fim);
 }
 
 /* Voz do cliente no mesmo slide, logo abaixo da tabela: uma linha por loja
@@ -7186,7 +7217,7 @@ function resumoOficina(){
 const LOSANGO = `<svg class="losango" viewBox="0 0 162 212" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M64.8 212.0 L57.3 212.0 L55.7 210.2 L-0.0 106.6 L56.6 0.0 L72.8 0.0 L72.8 1.5 L17.0 106.3 L64.0 195.0 L65.5 194.5 L112.5 106.3 L84.8 53.6 L92.4 38.4 L129.2 105.4 L73.7 210.4 L72.4 212.0ZM97.0 212.0 L89.3 212.0 L89.0 210.4 L144.8 106.2 L97.5 17.1 L96.2 17.4 L49.0 105.4 L77.0 158.1 L69.5 172.9 L68.0 173.3 L32.1 105.8 L88.8 0.0 L105.1 0.0 L161.7 105.8 L105.7 210.6 L104.6 212.0Z"/></svg>`;
 
 /* etiqueta da versão, para conferir num relance qual arquivo está aberto */
-const VERSAO = 'v30 · 04/11';
+const VERSAO = 'v31 · 13/11';
 const selRodape = document.getElementById('rodapeData');
 if (selRodape) selRodape.textContent = VERSAO;
 
